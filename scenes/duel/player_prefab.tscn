@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3 uid="uid://dtxrnwvp1x0gp"]
+
+[ext_resource type="Script" path="res://scripts/combat/player.gd" id="1_player"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 20.0
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_player")
+
+[node name="Sprite" type="Polygon2D" parent="."]
+color = Color(0.3, 0.6, 0.9, 1)
+polygon = PackedVector2Array(-20, 0, -10, -17.32, 10, -17.32, 20, 0, 10, 17.32, -10, 17.32)
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -20.0
+offset_top = -35.0
+offset_right = 20.0
+offset_bottom = -28.0
+value = 100.0
+show_percentage = false
