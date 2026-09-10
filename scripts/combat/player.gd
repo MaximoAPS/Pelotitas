@@ -12,12 +12,13 @@ signal health_changed(new_health: int, max_health: int)
 signal died()
 
 @export var max_health: int = 100
-@export var base_move_speed: float = 200.0
 
 @export_group("Stats")
 @export var ataque: int = 10
 @export var defensa: int = 5
-@export var velocidad: int = 10
+@export var velocidad: float = 1.0
+
+const BASE_MOVE_SPEED: float = 200.0
 
 var current_health: int = 100
 var pelotita_id: String = ""
@@ -50,8 +51,11 @@ func _handle_input() -> void:
 		# Fallback para testing en desktop
 		input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	
-	# Movimiento basado en stat de velocidad
-	var move_speed = base_move_speed + (velocidad * 5.0)
+	# Velocidad de movimiento: BASE_MOVE_SPEED × stat de velocidad
+	# velocidad = 1.0 → 200 px/s (baseline)
+	# velocidad = 2.0 → 400 px/s (doble)
+	# velocidad = 0.5 → 100 px/s (mitad)
+	var move_speed = BASE_MOVE_SPEED * velocidad
 	velocity = input_dir * move_speed
 	
 	# Habilidades: manejadas por señales de TouchInput o teclas de debug

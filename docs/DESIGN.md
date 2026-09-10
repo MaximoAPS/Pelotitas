@@ -172,9 +172,9 @@ Cada pelotita tiene tres estadísticas base que afectan su desempeño en combate
 
 #### Stats Principales
 
-- **Ataque**: Determina el daño que inflige la pelotita con sus habilidades
-- **Defensa**: Reduce el daño recibido de ataques enemigos
-- **Velocidad**: Afecta la velocidad de movimiento de la pelotita
+- **Ataque** (`ataque`): Determina el daño que inflige la pelotita con sus habilidades
+- **Defensa** (`defensa`): Reduce el daño recibido de ataques enemigos
+- **Velocidad** (`velocidad`): Multiplicador de la velocidad de movimiento de la pelotita
 
 #### Fórmula de Daño
 
@@ -197,15 +197,23 @@ Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
 
 #### Velocidad de Movimiento
 
-La velocidad final de movimiento se calcula como:
+La velocidad final de movimiento se calcula como multiplicador directo:
 
 ```
-Velocidad de Movimiento = velocidad_base + (stat_velocidad × 5.0)
+Velocidad de Movimiento (px/s) = BASE_MOVE_SPEED × stat_velocidad
 ```
 
-- `velocidad_base`: 200 píxeles por segundo (configurable)
-- `stat_velocidad`: Estadística de velocidad de la pelotita (por defecto: 10)
-- Con velocidad 10: 200 + (10 × 5) = 250 px/s
+**Constante base**: `BASE_MOVE_SPEED = 200 px/s`
+- Esta es la velocidad baseline para una pelotita con `velocidad = 1.0`
+- Elegida para pantallas 1920×1080 landscape (Android)
+
+**Ejemplos**:
+- `velocidad = 1.0` → 200 × 1.0 = **200 px/s** (baseline)
+- `velocidad = 2.0` → 200 × 2.0 = **400 px/s** (doble de rápido)
+- `velocidad = 0.5` → 200 × 0.5 = **100 px/s** (mitad de rápido)
+- `velocidad = 1.5` → 200 × 1.5 = **300 px/s** (50% más rápido)
+
+**Nota importante**: La velocidad de **proyectiles** es independiente del stat de velocidad del personaje. Cada habilidad define su propia velocidad de proyectil (ej: 400 px/s para disparos básicos elementales).
 
 #### Knockback (Retroceso)
 
