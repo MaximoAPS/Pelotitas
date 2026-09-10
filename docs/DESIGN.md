@@ -4,7 +4,8 @@
 
 Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementales. Arquitectura modular y escalable pensada para agregar nuevos modos, habilidades y mecánicas sin reescribir código existente.
 
-**Plataforma primaria**: Mobile (Android/iOS) con controles táctiles  
+**Plataforma primaria**: **Android** con controles táctiles  
+**Plataforma futura**: iOS (posterior a Android)  
 **Plataformas secundarias**: Desktop y web para desarrollo y testing
 
 **Estado actual**: Scaffolding inicial - solo estructura base y stubs, no gameplay completo.
@@ -34,19 +35,22 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 
 ### 3. Multijugador y Plataforma
 
-**Mobile-first con PvP online**:
+**Android-first con PvP online**:
 
-- **Plataforma primaria**: Android/iOS con controles táctiles
+- **Plataforma primaria**: **Android** con controles táctiles (gama media/alta target)
+- **Plataforma futura**: iOS (mismo código base, requiere Mac para build)
 - **Plataformas secundarias**: Desktop/web para desarrollo y testing
 - Sistema de autoridad de red (Godot High-Level Multiplayer API)
 - **Servidor autoritativo** para combate y física
 - **Path local/bots** para testing e iteración sin oponente remoto
+- Optimización de red para WiFi/4G/5G móvil
 
-**Controles táctiles**:
+**Controles táctiles (Android-optimized)**:
 - **Joystick virtual** (izquierda inferior) para movimiento 360°
-- **3 botones grandes** (derecha inferior) para habilidades usables
+- **3 botones grandes** (derecha inferior) para habilidades usables, tamaño touch-friendly
 - **Indicador pasivo** (centro derecho) muestra habilidad pasiva equipada
 - **HUD superior** con barra de vida y cooldowns
+- Feedback visual al presionar (futura: vibración háptica)
 
 ### 4. Sistema de Modos Modular
 
@@ -253,14 +257,21 @@ Ability (Resource base)
 - [ ] Manejo de latencia y desconexiones (crítico en mobile)
 - [ ] Optimización de ancho de banda para redes móviles
 
-### Mobile-Specific
-- [ ] Testing en dispositivos Android reales
-- [ ] Optimización de rendimiento para móviles gama media/baja
-- [ ] Configuración de export templates (Android/iOS)
-- [ ] Vibración háptica en habilidades y daño
-- [ ] Ajuste de tamaños de botones según DPI
-- [ ] Manejo de diferentes aspect ratios móviles
-- [ ] Pausa automática al perder foco (llamada entrante, etc.)
+### Android-Specific
+- [ ] **Testing en dispositivos Android reales** (gama media: Samsung Galaxy A, Xiaomi Redmi)
+- [ ] Optimización de rendimiento para Android gama media/baja
+- [ ] Configuración de export templates Android (APK + AAB para Play Store)
+- [ ] Vibración háptica en habilidades y daño (Android Vibrator API)
+- [ ] Ajuste de tamaños de botones según DPI Android
+- [ ] Manejo de diferentes aspect ratios Android (18:9, 19:9, 20:9, etc.)
+- [ ] Pausa automática al perder foco (llamada entrante, home button)
+- [ ] Testing en diferentes versiones Android (7.0 - 14+)
+- [ ] Permisos Android: INTERNET, ACCESS_NETWORK_STATE, VIBRATE
+
+### iOS (Futuro)
+- [ ] Configuración de export templates iOS (requiere macOS + Xcode)
+- [ ] Provisioning profiles y certificados Apple Developer
+- [ ] Adaptaciones específicas de iOS (notch, dynamic island, gestures)
 
 ### Habilidades
 - [ ] Implementar habilidades elementales concretas
@@ -309,15 +320,29 @@ Ability (Resource base)
 
 ---
 
-## Configuración Mobile
+## Configuración Android
 
 ### project.godot - Settings Clave
 
-- **Orientación**: Landscape (sensor_landscape = 6)
-- **Resolución base**: 1920x1080 (escalado a diferentes dispositivos)
+- **Orientación**: Landscape (sensor_landscape = 6) - rotación automática izq/der
+- **Resolución base**: 1920x1080 (escalado a diferentes dispositivos Android)
 - **Stretch mode**: `canvas_items` con aspect `expand`
-- **Touch emulation**: Habilitado en editor para testing con mouse
-- **Export templates**: Android primero, iOS-ready (requiere Mac para build)
+- **Touch emulation**: Habilitado en editor para testing con mouse en desktop
+- **Export template primario**: Android APK/AAB
+- **Min SDK**: Android 7.0 (API 24) - compatibilidad amplia
+- **Target SDK**: Android 14+ (API 34) - requerido por Google Play
+
+### Configuración de Export Android
+
+Ver `docs/MOBILE_EXPORT.md` para detalles completos.
+
+**Package**: `com.maximoaps.pelotitas`  
+**Permisos requeridos**:
+- `INTERNET`: Multiplayer online
+- `ACCESS_NETWORK_STATE`: Detectar WiFi vs datos móviles
+- `VIBRATE`: Feedback háptico (opcional)
+
+**Formato de release**: AAB (Android App Bundle) para Google Play Store
 
 ### Controles de Testing Desktop
 
@@ -330,8 +355,10 @@ Para desarrollo en PC/Mac sin touch:
 
 Este documento debe **actualizarse** cuando se tomen nuevas decisiones de diseño o se implementen sistemas críticos.
 
-**Prioridad actual**: 
-1. Testing en dispositivo Android real
-2. Completar red y sincronización multiplayer optimizada para mobile
-3. Implementar 3-5 habilidades básicas por elemento
-4. Optimización de rendimiento para móviles gama media
+**Prioridad actual (Android-first)**: 
+1. **Testing en dispositivo Android real** (Samsung Galaxy A52/A53 o Xiaomi Redmi Note 11 recomendados)
+2. Completar red y sincronización multiplayer optimizada para Android (WiFi/4G/5G)
+3. Implementar 3-5 habilidades básicas por elemento con feedback visual touch
+4. Optimización de rendimiento para Android gama media (target: 60 FPS estable)
+5. Vibración háptica en Android para acciones de combate
+6. Testing en múltiples aspect ratios Android

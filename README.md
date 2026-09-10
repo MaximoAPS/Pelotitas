@@ -2,7 +2,8 @@
 
 Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementales (Fuego, Agua, Tierra, Aire).
 
-🎮 **Plataforma primaria**: Android/iOS con controles táctiles  
+🎮 **Plataforma primaria**: **Android** con controles táctiles  
+📱 **Plataforma futura**: iOS (posterior a Android)  
 🖥️ **Plataformas secundarias**: Desktop y web para desarrollo/testing
 
 ## Estado Actual
@@ -13,6 +14,7 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 
 - **Godot Engine 4.3+** (o cualquier versión 4.x compatible)
 - Sistema operativo: Windows, Linux, o macOS
+- **Para export Android**: Android SDK + build tools (ver `docs/MOBILE_EXPORT.md`)
 
 ## Cómo Abrir el Proyecto
 
@@ -37,13 +39,20 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
    - Click en botones de habilidades
    - Usar arrow keys/WASD como fallback para movimiento
 
-### Testing en Android
+### Testing en Android (Plataforma Target)
 
-1. Configura Android SDK en Godot (Editor → Settings → Export)
-2. Instala export templates de Android
-3. Conecta dispositivo por USB con USB debugging habilitado
-4. Project → Export → Add Android template
-5. One-click deploy para testing rápido
+Ver **`docs/MOBILE_EXPORT.md`** para guía completa de configuración Android.
+
+**Setup rápido**:
+1. Instalar Android SDK (via Android Studio recomendado)
+2. Configurar rutas en Godot: Editor → Editor Settings → Export → Android
+3. Instalar export templates de Godot 4.3 para Android
+4. Conectar dispositivo por USB con USB debugging habilitado
+5. Project → Export → Android (APK) → One-click deploy
+
+**Package name**: `com.maximoaps.pelotitas`  
+**Min SDK**: Android 7.0 (API 24)  
+**Target SDK**: Android 14+ (API 34)
 
 ## Arquitectura
 
@@ -71,13 +80,14 @@ pelotitas/
 
 ### Sistemas Clave
 
-- **Mobile-First**: Controles táctiles optimizados (joystick virtual + botones grandes)
+- **Android-First**: Controles táctiles optimizados (joystick virtual + botones grandes)
 - **Modos de Juego Modulares**: arquitectura plug-in para agregar nuevos modos sin modificar el núcleo
-- **Multiplayer Online**: servidor autoritativo usando Godot High-Level Multiplayer API optimizado para redes móviles
+- **Multiplayer Online**: servidor autoritativo optimizado para redes móviles (WiFi/4G/5G)
 - **Progresión Elemental**: sistema de afinidad secreta que determina qué puntos de habilidad obtienes al subir de nivel
 - **Loadout**: 3 habilidades usables + 1 pasiva por duelo
 - **Primer Modo**: **Duelo por Vida** (1v1, gana el primero en reducir HP rival a 0)
 - **Orientación**: Landscape (horizontal) para mejor experiencia en combate arena
+- **iOS**: Target futuro (posterior a lanzamiento Android)
 
 ## Controles
 

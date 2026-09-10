@@ -1,6 +1,8 @@
 # Guía de Export Mobile
 
-## Android
+## Android (Plataforma Primaria)
+
+**Este proyecto está optimizado para Android como plataforma principal.** iOS es un target futuro pero no requerido en esta fase.
 
 ### Requisitos Previos
 
@@ -44,9 +46,13 @@
 
 ---
 
-## iOS
+## iOS (Target Futuro - No Requerido Ahora)
 
-### Requisitos Previos
+⚠️ **iOS es una plataforma futura, NO requerida en esta fase del proyecto.**
+
+El proyecto está estructurado para soportar iOS eventualmente, pero **Android es la prioridad**.
+
+### Requisitos Previos (cuando se implemente)
 
 ⚠️ **Requiere macOS** con Xcode instalado
 
@@ -55,9 +61,9 @@
 3. **Apple Developer Account** ($99/año) para deployment
 4. **Provisioning Profile** configurado
 
-### Configuración Básica (iOS-Ready)
+### Configuración Básica (Cuando se Implemente)
 
-El proyecto está listo para iOS export, pero requiere:
+El proyecto puede ser adaptado para iOS en el futuro. Requerirá:
 
 1. Bundle ID único: `com.maximoaps.pelotitas`
 2. Provisioning profile con capabilities:
@@ -72,18 +78,20 @@ El proyecto está listo para iOS export, pero requiere:
 - **TestFlight**: Beta testing con devices reales
 - **Ad-hoc**: Deploy directo a devices registrados
 
-### Diferencias vs Android
+### Diferencias vs Android (Referencia Futura)
 
-- **Touch**: API similar, pero gestos del sistema (home swipe) pueden interferir
+Cuando se implemente iOS:
+- **Touch**: API similar, pero gestos del sistema (home swipe) requieren ajustes
 - **Performance**: Generalmente mejor en iOS por optimización hardware
-- **Screen sizes**: Más variedad en Android, pero notch/dynamic island en iOS
-- **Monetization**: In-App Purchases requiere StoreKit integration
+- **Screen sizes**: Android tiene más variedad, iOS tiene notch/dynamic island
+- **Monetization**: In-App Purchases requiere StoreKit (vs Google Play Billing en Android)
+- **Testing**: TestFlight (iOS) vs Internal Testing (Android)
 
 ---
 
-## Testing Checklist
+## Testing Checklist (Android-Focused)
 
-### Pre-Export Testing (Desktop)
+### Pre-Export Testing (Desktop con Touch Emulation)
 
 - [ ] Touch emulation funciona con mouse
 - [ ] Joystick virtual responde correctamente
@@ -91,9 +99,14 @@ El proyecto está listo para iOS export, pero requiere:
 - [ ] UI se escala correctamente en diferentes resoluciones
 - [ ] Transiciones de escena funcionan
 
-### Post-Export Testing (Device)
+### Post-Export Testing (Android Device Real)
 
-- [ ] Touch input responde sin lag
+**Dispositivos recomendados para testing**:
+- Samsung Galaxy A52/A53 (gama media-alta)
+- Xiaomi Redmi Note 11/12 (gama media)
+- Motorola Moto G (gama media-baja)
+
+- [ ] Touch input responde sin lag (< 16ms)
 - [ ] Movimiento con joystick es preciso
 - [ ] Botones tienen feedback visual al presionar
 - [ ] UI es legible en pantalla pequeña (5")
@@ -123,15 +136,11 @@ El proyecto está listo para iOS export, pero requiere:
 - Verificar `pointing/emulate_mouse_from_touch=false` en project.godot
 - Asegurar que Control nodes tengan `mouse_filter` correcto
 
-### iOS
+### iOS (Futuro)
 
-**Provisioning profile invalid**
-- Regenerar en Apple Developer Portal
-- Verificar Bundle ID matches
+_(No aplicable en esta fase - Android es la prioridad)_
 
-**App rejected por Apple**
-- Agregar privacy descriptions completas
-- Cumplir guidelines de App Store (no gambling mechanics)
+Cuando se implemente iOS, ver documentación oficial de Godot para iOS troubleshooting.
 
 ---
 
