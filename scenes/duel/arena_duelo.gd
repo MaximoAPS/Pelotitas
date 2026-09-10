@@ -9,10 +9,10 @@ extends Node2D
 var player_scene = preload("res://scenes/duel/player_prefab.tscn")
 
 # Precarga de habilidades elementales para testing
-var disparo_fuego = preload("res://resources/abilities/disparo_fuego.tres")
-var disparo_agua = preload("res://resources/abilities/disparo_agua.tres")
-var disparo_tierra = preload("res://resources/abilities/disparo_tierra.tres")
-var disparo_viento = preload("res://resources/abilities/disparo_viento.tres")
+var disparo_fuego = preload("res://resources/abilities/disparo_fuego.tres") as ElementalShot
+var disparo_agua = preload("res://resources/abilities/disparo_agua.tres") as ElementalShot
+var disparo_tierra = preload("res://resources/abilities/disparo_tierra.tres") as ElementalShot
+var disparo_viento = preload("res://resources/abilities/disparo_viento.tres") as ElementalShot
 
 
 func _ready() -> void:
@@ -114,15 +114,15 @@ func _setup_test_loadout(player: Player, player_index: int) -> void:
 	# Player 1: Fuego, Agua, Tierra
 	# Player 2: Agua, Viento, Fuego (para variar)
 	if player_index == 0:
-		loadout.equip_usable(disparo_fuego, 0)
-		loadout.equip_usable(disparo_agua, 1)
-		loadout.equip_usable(disparo_tierra, 2)
+		loadout.equip_usable(disparo_fuego.duplicate(), 0)
+		loadout.equip_usable(disparo_agua.duplicate(), 1)
+		loadout.equip_usable(disparo_tierra.duplicate(), 2)
 		# Stats de prueba: velocidad más alta
 		player.velocidad = 1.5
 	else:
-		loadout.equip_usable(disparo_agua, 0)
-		loadout.equip_usable(disparo_viento, 1)
-		loadout.equip_usable(disparo_fuego, 2)
+		loadout.equip_usable(disparo_agua.duplicate(), 0)
+		loadout.equip_usable(disparo_viento.duplicate(), 1)
+		loadout.equip_usable(disparo_fuego.duplicate(), 2)
 		# Stats de prueba: velocidad más baja
 		player.velocidad = 0.75
 	

@@ -47,12 +47,12 @@ func get_ability_type() -> String:
 ## ========================================
 
 ## Trigger: Al equipar la habilidad (inicio de loadout)
-func on_equip(player: Player) -> void:
+func on_equip(_player: Player) -> void:
 	pass
 
 
 ## Trigger: Al iniciar el match
-func on_match_start(player: Player) -> void:
+func on_match_start(_player: Player) -> void:
 	pass
 
 
