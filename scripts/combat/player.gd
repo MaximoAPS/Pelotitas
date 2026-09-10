@@ -18,7 +18,11 @@ signal died()
 @export var defensa: int = 5
 @export var velocidad: float = 1.0
 
-const BASE_MOVE_SPEED: float = 200.0
+## Constante de escala de arena (metros virtuales → píxeles)
+const PIXELS_PER_METER: float = 200.0
+
+## Velocidad normalizada en metros/segundo (calculada al iniciar match)
+var speed_m_s: float = 1.0
 
 var current_health: int = 100
 var pelotita_id: String = ""
@@ -51,12 +55,10 @@ func _handle_input() -> void:
 		# Fallback para testing en desktop
 		input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	
-	# Velocidad de movimiento: BASE_MOVE_SPEED × stat de velocidad
-	# velocidad = 1.0 → 200 px/s (baseline)
-	# velocidad = 2.0 → 400 px/s (doble)
-	# velocidad = 0.5 → 100 px/s (mitad)
-	var move_speed = BASE_MOVE_SPEED * velocidad
-	velocity = input_dir * move_speed
+	# Velocidad de movimiento: velocidad relativa (m/s) × escala de píxeles
+	# speed_m_s ya está normalizado por media geométrica de participantes
+	var move_speed_px_s = speed_m_s * PIXELS_PER_METER
+	velocity = input_dir * move_speed_px_s
 	
 	# Habilidades: manejadas por señales de TouchInput o teclas de debug
 	if Input.is_action_just_pressed("ability_1") and loadout:
@@ -105,3 +107,19 @@ func _on_ability_fired(slot: int, aim_direction: Vector2) -> void:
 	if loadout:
 		# TODO: Pasar aim_direction a la habilidad para spawning direccional
 		loadout.use_ability(slot, aim_direction)
+
+
+## Calcula y asigna la velocidad normalizada basada en media geométrica
+## G = media geométrica de velocidades de todos los participantes
+## speed_m_s = velocidad_stat / G
+func set_normalized_speed(geometric_mean: float) -> void:
+	if geometric_mean <= 0.0:
+		push_error("[Player] Media geométrica inválida: %f" % geometric_mean)
+		geometric_mean = 1.0
+	
+	speed_m_s = velocidad / geometric_mean
+	
+	var move_speed_px_s = speed_m_s * PIXELS_PER_METER
+	print("[Player] %s: velocidad_stat=%.2f, G=%.2f → speed=%.2f m/s (%.1f px/s)" % [
+		pelotita_id, velocidad, geometric_mean, speed_m_s, move_speed_px_s
+	])

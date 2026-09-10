@@ -195,25 +195,63 @@ Pelotita A (Ataque: 15) ataca a Pelotita B (Defensa: 8)
 Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
 ```
 
-#### Velocidad de Movimiento
+#### Velocidad de Movimiento (Sistema Relativo)
 
-La velocidad final de movimiento se calcula como multiplicador directo:
+La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match. Esto garantiza que las velocidades sean proporcionales entre jugadores independientemente de los valores absolutos de sus stats.
+
+**Fórmula**:
+
+1. **Media geométrica** de velocidades de participantes:
+   ```
+   G = (∏ V_i)^(1/n)
+   ```
+   Donde `V_i` es el stat de velocidad de cada participante y `n` es el número de participantes.
+
+2. **Velocidad en metros virtuales por segundo** para cada pelotita:
+   ```
+   speed_m_s = V_i / G
+   ```
+   Una pelotita con `velocidad = G` se mueve a exactamente **1.0 m/s**.
+
+3. **Conversión a píxeles**:
+   ```
+   speed_px_s = speed_m_s × PIXELS_PER_METER
+   ```
+   **Constante de escala**: `PIXELS_PER_METER = 200 px/m`
+   - Elegida para pantallas 1920×1080 landscape (Android)
+   - Define la escala visual de la arena
+
+**Ejemplo numérico (Duelo 1v1)**:
 
 ```
-Velocidad de Movimiento (px/s) = BASE_MOVE_SPEED × stat_velocidad
+Participantes:
+- Pelotita A: velocidad = 1.5
+- Pelotita B: velocidad = 0.75
+
+Media geométrica:
+G = (1.5 × 0.75)^(1/2) = (1.125)^0.5 ≈ 1.061
+
+Velocidades normalizadas:
+- Pelotita A: speed_m_s = 1.5 / 1.061 ≈ 1.414 m/s
+  → speed_px_s = 1.414 × 200 ≈ 283 px/s
+  
+- Pelotita B: speed_m_s = 0.75 / 1.061 ≈ 0.707 m/s
+  → speed_px_s = 0.707 × 200 ≈ 141 px/s
+
+Relación: A es ~2× más rápida que B (1.5 / 0.75 = 2.0)
 ```
 
-**Constante base**: `BASE_MOVE_SPEED = 200 px/s`
-- Esta es la velocidad baseline para una pelotita con `velocidad = 1.0`
-- Elegida para pantallas 1920×1080 landscape (Android)
+**Ventajas del sistema relativo**:
+- Las velocidades son **proporcionales** entre jugadores
+- Un jugador con el doble de stat de velocidad se mueve al doble de velocidad
+- Independiente de valores absolutos (funciona igual con 1-2 que con 100-200)
+- Se recalcula al inicio de cada match según participantes
 
-**Ejemplos**:
-- `velocidad = 1.0` → 200 × 1.0 = **200 px/s** (baseline)
-- `velocidad = 2.0` → 200 × 2.0 = **400 px/s** (doble de rápido)
-- `velocidad = 0.5` → 200 × 0.5 = **100 px/s** (mitad de rápido)
-- `velocidad = 1.5` → 200 × 1.5 = **300 px/s** (50% más rápido)
+**Guardas de seguridad**:
+- `V_i <= 0` se clampea a `0.01` (epsilon mínimo)
+- Previene división por cero y valores inválidos
 
-**Nota importante**: La velocidad de **proyectiles** es independiente del stat de velocidad del personaje. Cada habilidad define su propia velocidad de proyectil (ej: 400 px/s para disparos básicos elementales).
+**Nota importante**: La velocidad de **proyectiles** es independiente del stat de velocidad del personaje. Cada habilidad define su propia velocidad de proyectil (puede usar m/s con la misma constante PIXELS_PER_METER, ej: 2.0 m/s = 400 px/s para disparos básicos elementales).
 
 #### Knockback (Retroceso)
 
