@@ -27,40 +27,59 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -80.0
-offset_right = 100.0
-offset_bottom = 80.0
+offset_left = -200.0
+offset_top = -180.0
+offset_right = 200.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 15
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 64
 text = "PELOTITAS"
 horizontal_alignment = 1
 
-[node name="BtnHostGame" type="Button" parent="VBoxContainer"]
+[node name="Subtitle" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "v0.1 local"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="BtnLocalTest" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Prueba Local"
+
+[node name="BtnHostGame" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
 text = "Crear Servidor"
 
 [node name="BtnJoinGame" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
 text = "Unirse a Partida"
 
-[node name="BtnLocalTest" type="Button" parent="VBoxContainer"]
+[node name="Spacer2" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
-text = "Prueba Local (vs IA)"
-
-[node name="BtnOptions" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "Opciones"
 
 [node name="BtnExit" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
 text = "Salir"
 
+[connection signal="pressed" from="VBoxContainer/BtnLocalTest" to="." method="_on_local_test_pressed"]
 [connection signal="pressed" from="VBoxContainer/BtnHostGame" to="." method="_on_host_game_pressed"]
 [connection signal="pressed" from="VBoxContainer/BtnJoinGame" to="." method="_on_join_game_pressed"]
-[connection signal="pressed" from="VBoxContainer/BtnLocalTest" to="." method="_on_local_test_pressed"]
 [connection signal="pressed" from="VBoxContainer/BtnExit" to="." method="_on_exit_pressed"]

@@ -5,6 +5,7 @@ extends Node2D
 @onready var projectiles_node = $Projectiles
 @onready var spawn_point_1 = $SpawnPoint1
 @onready var spawn_point_2 = $SpawnPoint2
+@onready var results_screen = $ResultsScreen
 
 var player_scene = preload("res://scenes/duel/player_prefab.tscn")
 
@@ -21,6 +22,8 @@ func _ready() -> void:
 	if not Game.active_mode:
 		push_warning("[ArenaDuelo] No hay modo activo, usando DueloPorVida por defecto")
 		Game.active_mode = DueloPorVida.new()
+	
+	Game.duel_ended.connect(_on_duel_ended)
 	
 	_spawn_players()
 	Game.active_mode.on_match_start()
@@ -141,3 +144,9 @@ func _process(delta: float) -> void:
 ## Helper: spawns un proyectil en el mundo
 func spawn_projectile(projectile: Projectile) -> void:
 	projectiles_node.add_child(projectile)
+
+
+## Maneja el fin del duelo y muestra la pantalla de resultados
+func _on_duel_ended(winner_id: int) -> void:
+	print("[ArenaDuelo] Duelo finalizado, mostrando resultados")
+	results_screen.show_results(winner_id, 1)

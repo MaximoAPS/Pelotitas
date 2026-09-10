@@ -8,6 +8,7 @@ extends Node
 ## - Proveer acceso global a datos de sesión
 
 signal game_state_changed(new_state: GameState)
+signal duel_ended(winner_id: int)
 
 enum GameState {
 	BOOT,
@@ -46,4 +47,5 @@ func end_duel(winner_id: int = -1) -> void:
 		active_mode.on_duel_end(winner_id)
 	
 	change_state(GameState.POST_DUEL)
-	# TODO: Mostrar resultados, actualizar progresión
+	duel_ended.emit(winner_id)
+	print("[Game] Duelo finalizado, ganador: %d" % winner_id)

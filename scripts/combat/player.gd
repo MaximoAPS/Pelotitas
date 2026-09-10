@@ -115,7 +115,7 @@ func heal(amount: int) -> void:
 func _die() -> void:
 	print("[Player] %s murió" % pelotita_id)
 	died.emit()
-	# TODO: Notificar al modo de juego
+	# Modo de juego maneja la muerte via signal conectado en register_player
 	# TODO: Desactivar controles, reproducir animación de muerte
 
 
