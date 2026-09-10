@@ -29,26 +29,36 @@ func _ready() -> void:
 func _spawn_players() -> void:
 	var spawn_positions = Game.active_mode.get_spawn_positions()
 	
-	# TODO: Crear jugadores según peers conectados
-	# Por ahora, spawn de prueba local
+	# Testing local: Jugador 1 controlable, Jugador 2 dummy estacionario
 	
 	var players = []
 	
-	# Jugador 1
+	# Jugador 1 (controlable)
 	var player1 = player_scene.instantiate()
 	player1.position = spawn_positions[0] if spawn_positions.size() > 0 else spawn_point_1.position
 	player1.pelotita_id = "player_1"
+	player1.name = "Player1"
 	players_node.add_child(player1)
 	_setup_test_loadout(player1, 0)
 	players.append(player1)
 	
-	# Jugador 2 (dummy para pruebas)
+	# Jugador 2 (dummy estacionario para testing)
 	if spawn_positions.size() > 1:
 		var player2 = player_scene.instantiate()
 		player2.position = spawn_positions[1]
-		player2.pelotita_id = "player_2"
+		player2.pelotita_id = "player_2_dummy"
+		player2.name = "Player2Dummy"
 		players_node.add_child(player2)
 		_setup_test_loadout(player2, 1)
+		
+		# Marcar como dummy: no procesará input
+		player2.set_meta("is_dummy", true)
+		
+		# Color distintivo para el dummy (rojo/naranja)
+		var sprite = player2.get_node_or_null("Sprite")
+		if sprite and sprite is Polygon2D:
+			sprite.color = Color(1.0, 0.4, 0.3, 1.0)
+		
 		players.append(player2)
 	
 	# Calcular media geométrica y normalizar velocidades

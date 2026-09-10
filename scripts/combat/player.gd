@@ -46,10 +46,15 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not Net.has_authority(self):
-		return  # Solo el owner controla movimiento
+	# Dummies no procesan input pero sí física (pueden ser empujados, colisionar con paredes)
+	var is_dummy = has_meta("is_dummy") and get_meta("is_dummy")
 	
-	_handle_input()
+	if not is_dummy and not Net.has_authority(self):
+		return  # Solo el owner controla movimiento (excepto dummies)
+	
+	# Solo procesar input si NO es dummy
+	if not is_dummy:
+		_handle_input()
 	
 	var previous_velocity = velocity
 	var collision = move_and_slide()
@@ -84,8 +89,11 @@ func _handle_input() -> void:
 
 
 func take_damage(amount: int, attacker_id: int = -1, knockback_direction: Vector2 = Vector2.ZERO, knockback_strength: float = 0.0) -> void:
-	if not Net.has_authority(self):
-		return  # Solo el servidor/authority aplica daño
+	# Permitir daño a dummies (para testing local)
+	var is_dummy = has_meta("is_dummy") and get_meta("is_dummy")
+	
+	if not is_dummy and not Net.has_authority(self):
+		return  # Solo el servidor/authority aplica daño (excepto dummies)
 	
 	current_health = max(0, current_health - amount)
 	health_changed.emit(current_health, max_health)

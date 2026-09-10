@@ -706,6 +706,18 @@ Para desarrollo en PC/Mac sin touch:
 - **1, 2, 3**: Habilidades
 - **Mouse click + drag**: Emula joystick virtual
 
+### Testing Local (Sin Red)
+
+Para pruebas sin multiplayer, el juego spawna:
+- **Player 1**: Controlable con teclado/touch (azul)
+- **Player 2**: Dummy estacionario que NO se mueve ni persigue (rojo/naranja)
+  - Puede recibir daño de proyectiles
+  - Participa en colisiones elásticas (puede ser empujado)
+  - Recibe daño de paredes si es empujado contra ellas
+  - **NO tiene lógica de AI** - solo es un target de prueba
+
+Este enfoque permite testear física y habilidades sin implementar oponente inteligente.
+
 ## Notas Finales
 
 Este documento debe **actualizarse** cuando se tomen nuevas decisiones de diseño o se implementen sistemas críticos.
