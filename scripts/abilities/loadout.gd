@@ -15,9 +15,14 @@ func _ready() -> void:
 
 
 ## Equipa una habilidad usable en un slot (0-2)
-func equip_usable(ability: UsableAbility, slot: int) -> bool:
+func equip_usable(ability_resource: Resource, slot: int) -> bool:
 	if slot < 0 or slot >= MAX_USABLE_ABILITIES:
 		push_error("[Loadout] Slot inválido: %d" % slot)
+		return false
+	
+	var ability = ability_resource as UsableAbility
+	if not ability:
+		push_error("[Loadout] El recurso no es una UsableAbility válida")
 		return false
 	
 	usable_abilities[slot] = ability
