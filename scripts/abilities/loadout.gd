@@ -10,8 +10,8 @@ var passive_ability: PassiveAbility = null
 var owner_player: Player = null
 
 
-func _ready() -> void:
-	# Initialize as untyped array
+func _init() -> void:
+	# Initialize as untyped array in _init() since Loadout may not be added to scene tree
 	usable_abilities = []
 	usable_abilities.resize(MAX_USABLE_ABILITIES)
 
