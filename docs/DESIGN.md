@@ -45,6 +45,50 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 - **Path local/bots** para testing e iteración sin oponente remoto
 - Optimización de red para WiFi/4G/5G móvil
 
+#### MVP Networking (Implementado)
+
+**Alcance del MVP de red:**
+- **Sin backend ni cuentas**: Solo host/join directo por IP en misma WiFi
+- **ENet peer-to-peer**: Un jugador hostea, otro se une por IP
+- **Nickname local**: Almacenado en `user://user_prefs.cfg` (ConfigFile), sin login
+- **Sincronización básica**: Posiciones de jugadores y proyectiles via MultiplayerSynchronizer y RPCs
+
+**Flujo de conexión:**
+1. **Host crea servidor**:
+   - Botón "Crear Servidor" en menú principal
+   - Servidor ENet en puerto 7777 (configurable)
+   - Muestra IP local (ej: 192.168.1.100) para que otros jugadores se conecten
+   - Espera a que se una 1 cliente (mínimo 2 jugadores para duelo)
+   - Botón "Iniciar Duelo" se habilita cuando hay suficientes jugadores
+   
+2. **Cliente se une**:
+   - Botón "Unirse a Partida" → diálogo con inputs:
+     - Nickname (cargado desde preferencias locales)
+     - IP del servidor (default: 127.0.0.1)
+     - Puerto (default: 7777)
+   - Al conectar exitosamente, envía nickname al servidor via RPC
+   - Automáticamente entra a la arena cuando el host inicia duelo
+
+3. **En duelo**:
+   - Servidor tiene autoridad sobre jugadores y proyectiles
+   - Posiciones de jugadores sincronizadas con MultiplayerSynchronizer
+   - Proyectiles spawneados via RPC (`_spawn_projectile_networked`)
+   - Solo el authority (dueño) del jugador procesa input y física de ese jugador
+
+**Limitaciones del MVP:**
+- Solo WiFi local (misma red)
+- Sin matchmaking ni lobby público
+- Máximo 2 jugadores (1v1)
+- Sin reconexión automática
+- Sin NAT traversal (no funciona entre redes diferentes)
+- Sin persistencia de partidas (si se desconecta, se pierde el duelo)
+
+**Para Android WiFi testing:**
+- Ambos dispositivos deben estar en la misma red WiFi
+- Host necesita saber su IP local (mostrada en el diálogo)
+- Cliente ingresa la IP del host manualmente
+- Permisos requeridos: `INTERNET`, `ACCESS_NETWORK_STATE`
+
 **Controles táctiles (Android-optimized) - Layout y mecánicas bloqueadas**:
 
 Layout estilo **twin-stick-ish** (stick izquierda, botones derecha):
@@ -606,11 +650,15 @@ Cada elemento tiene un **disparo básico** que funciona con la misma mecánica:
 ## TODOs Críticos para Gameplay Completo
 
 ### Red y Multiplayer
-- [ ] Implementar MultiplayerSynchronizer en Player
-- [ ] Lobby para esperar jugadores
-- [ ] Sincronizar spawn de proyectiles
-- [ ] Manejo de latencia y desconexiones (crítico en mobile)
+- [x] Implementar MultiplayerSynchronizer en Player
+- [x] Sincronizar spawn de proyectiles (via RPC)
+- [x] Host/Join por IP con nickname local
+- [x] Mostrar IP local del servidor
+- [ ] Lobby mejorado con lista de jugadores conectados
+- [ ] Manejo robusto de latencia y desconexiones (crítico en mobile)
 - [ ] Optimización de ancho de banda para redes móviles
+- [ ] NAT traversal / relay server para jugar entre redes diferentes
+- [ ] Reconexión automática en desconexiones temporales
 
 ### Android-Specific
 - [ ] **Testing en dispositivos Android reales** (gama media: Samsung Galaxy A, Xiaomi Redmi)
