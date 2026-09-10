@@ -434,6 +434,40 @@ func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
 
 ---
 
+## Roadmap de Implementación
+
+### Orden de Prioridad (Bloqueado)
+
+**1. Core (EN PROGRESO)**
+- Pulir flujo básico hasta poder jugar múltiples partidas multiplayer seguidas
+- Estado actual: Flow local funciona (boot → menu → duel → results → restart)
+- Pendiente: Red/multiplayer estable, reconexión, múltiples rondas sin bugs
+
+**2. Stats y Nivel (PRE-habilidades)**
+- Definir cómo ATK/DEF/Speed/Masa se modifican al subir de nivel
+- Sistema de progresión: XP → Level up → puntos de stat
+- Fórmulas de crecimiento de stats por nivel
+- **Bloquea habilidades**: las habilidades usarán estos stats, no al revés
+
+**3. Habilidades**
+- Implementar skill tree elemental con dependencias
+- Habilidades usan stats ya definidos (ATK escala daño, etc.)
+- Triggers y mecánicas complejas
+
+**4. UI de Beta**
+- HUD elaborado, animaciones, feedback visual rico
+- Menús de loadout y skill tree
+- Polish visual para primera beta pública
+
+**5. Balance y Modos Adicionales**
+- Ajustar stats, habilidades, tiempos
+- Captura la Bandera, Team Deathmatch, etc.
+- Escalar contenido
+
+⚠️ **NO implementar habilidades antes de definir sistema de stats/nivel**. Las habilidades dependen de stats finales.
+
+---
+
 ## Flujo de App v0.1
 
 ### Secuencia de Pantallas
