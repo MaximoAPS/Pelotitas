@@ -57,6 +57,11 @@ func _spawn_players() -> void:
 	# Registrar jugadores en el modo después de normalizar velocidades
 	for player in players:
 		Game.active_mode.register_player(player)
+	
+	# Trigger: on_match_start para todas las habilidades
+	for player in players:
+		if player.loadout:
+			player.loadout.trigger_on_match_start()
 
 
 ## Calcula la media geométrica de velocidades y normaliza speeds de todos los jugadores
@@ -113,6 +118,9 @@ func _setup_test_loadout(player: Player, player_index: int) -> void:
 	
 	player.set_loadout(loadout)
 	print("[ArenaDuelo] Loadout de prueba configurado para %s" % player.pelotita_id)
+	
+	# Llamar triggers de equip
+	loadout.trigger_on_equip()
 
 
 func _process(delta: float) -> void:

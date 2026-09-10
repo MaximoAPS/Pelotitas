@@ -31,12 +31,14 @@ func execute(caster: Player, aim_direction: Vector2) -> void:
 		var spawn_offset = aim_direction.normalized() * 32.0
 		projectile.global_position = caster.global_position + spawn_offset
 		
-		# Inicializar con stats del caster
+		# Inicializar con stats del caster y referencia a esta habilidad
 		projectile.initialize(
 			projectile.global_position,
 			aim_direction,
 			caster.get_multiplayer_authority(),
-			caster.ataque
+			caster.ataque,
+			self,  # source_ability
+			caster  # source_player
 		)
 		
 		# Agregar a la escena

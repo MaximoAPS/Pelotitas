@@ -20,6 +20,7 @@ func try_use(caster: Player, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
 		return false
 	
 	last_use_time = Time.get_ticks_msec() / 1000.0
+	on_activate(caster, aim_direction)
 	execute(caster, aim_direction)
 	return true
 
@@ -45,3 +46,18 @@ func execute(caster: Player, aim_direction: Vector2) -> void:
 	# - Invocación de summons facing aim_direction
 	# - Creación de muros perpendiculares a aim_direction
 	# - Efectos de área centrados en caster + aim_direction offset
+
+
+## ========================================
+## Triggers adicionales para UsableAbility
+## ========================================
+
+## Trigger: Al activar/usar la habilidad (después de pasar cooldown)
+func on_activate(caster: Player, aim_direction: Vector2) -> void:
+	pass
+
+
+## Trigger: Cuando un proyectil de esta habilidad impacta enemigo
+## Llamado desde el proyectil mismo
+func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
+	pass

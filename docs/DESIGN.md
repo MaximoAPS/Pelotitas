@@ -153,7 +153,7 @@ Pelotita "Chispa":
   Level up 3: tira 15% → Agua (+1 punto Agua)
 ```
 
-### 6. Loadout por Duelo
+### 10. Loadout por Duelo
 
 Cada pelotita equipa **3 habilidades usables + 1 pasiva** antes de entrar al duelo.
 
@@ -168,13 +168,14 @@ Cada pelotita equipa **3 habilidades usables + 1 pasiva** antes de entrar al due
 
 ### 7. Stats de Combate
 
-Cada pelotita tiene tres estadísticas base que afectan su desempeño en combate:
+Cada pelotita tiene cuatro estadísticas base que afectan su desempeño en combate:
 
 #### Stats Principales
 
 - **Ataque** (`ataque`): Determina el daño que inflige la pelotita con sus habilidades
 - **Defensa** (`defensa`): Reduce el daño recibido de ataques enemigos
 - **Velocidad** (`velocidad`): Multiplicador de la velocidad de movimiento de la pelotita
+- **Masa** (`masa`): Determina la respuesta en colisiones elásticas con otras pelotitas (valores mayores empujan más)
 
 #### Fórmula de Daño
 
@@ -260,6 +261,176 @@ Cuando un proyectil impacta a una pelotita:
 - La fuerza de knockback es fija: **150 píxeles/segundo** inicialmente
 - El knockback puede escalarse ligeramente con el ataque en el futuro
 - Propósito: Separar combatientes y crear dinámica posicional
+
+### 8. Sistema de Física y Colisiones
+
+El juego implementa física de esferas rígidas para colisiones entre pelotitas y daño por impacto contra paredes.
+
+#### Colisiones entre Jugadores (Pelotita vs Pelotita)
+
+**Mecánica**: Colisiones elásticas perfectas (sin deformación)
+
+- Las pelotitas se comportan como esferas rígidas que rebotan al colisionar
+- **NO causan daño** por sí mismas
+- La respuesta de colisión depende de la **masa** de cada pelotita:
+  - Una pelotita con mayor masa empuja más a una con menor masa
+  - Conservación de momento lineal y energía cinética (colisión perfectamente elástica)
+- **Fórmula de impulso elástico**:
+  ```
+  impulse_scalar = -(1 + e) × v_rel · n / (1/m1 + 1/m2)
+  ```
+  Donde:
+  - `e = 1.0` (coeficiente de restitución, perfectamente elástico)
+  - `v_rel` = velocidad relativa entre pelotitas
+  - `n` = normal de colisión (dirección de separación normalizada)
+  - `m1`, `m2` = masas de las pelotitas
+
+**Propósito estratégico**:
+- Empujar al rival contra la pared para causar daño indirecto
+- Habilidades como dash/empuje permiten knockback direccional
+- Diferencias de masa crean asimetrías tácticas (pasivas que aumentan masa vienen en futuro)
+
+#### Colisiones con Paredes (Pelotita vs Arena)
+
+**Mecánica**: Daño por impacto basado en velocidad
+
+- Las paredes de la arena son `StaticBody2D` con colisión
+- **SÍ causan daño** al impactar, escalando con velocidad de impacto
+- **Fórmula de daño por pared**:
+  ```
+  if impact_speed > WALL_DAMAGE_THRESHOLD:
+      wall_damage = (impact_speed - threshold) × WALL_DAMAGE_MULTIPLIER × masa
+  ```
+  Donde:
+  - `WALL_DAMAGE_THRESHOLD = 100.0 px/s` (velocidad mínima para causar daño)
+  - `WALL_DAMAGE_MULTIPLIER = 0.02` (daño por unidad de velocidad)
+  - `impact_speed` = velocidad del jugador proyectada sobre la normal de la pared
+  - `masa` = stat de masa de la pelotita
+
+**Ejemplo**:
+```
+Pelotita con masa=1.0 impacta pared a 300 px/s:
+wall_damage = (300 - 100) × 0.02 × 1.0 = 4 puntos de daño
+
+Pelotita con masa=1.5 impacta pared a 400 px/s:
+wall_damage = (400 - 100) × 0.02 × 1.5 = 9 puntos de daño
+```
+
+**Propósito estratégico**:
+- Crear zonas de peligro en los bordes del mapa
+- Recompensar posicionamiento defensivo central
+- Habilidades de empuje/dash se vuelven ofensivas al forzar colisiones de pared
+- Mayor masa = mayor daño recibido de paredes (trade-off táctico)
+
+#### Configuración de Arena
+
+- **Dimensiones**: 1920×1080 píxeles (landscape móvil)
+- **Paredes**: Rectángulos de 20px de grosor en los 4 bordes
+- **Color de paredes**: Rojo oscuro (Color(0.6, 0.2, 0.2, 1)) para indicar peligro
+- **Posiciones de spawn**: Alejadas de las paredes (300px desde borde izquierdo, 1620px desde derecho)
+
+### 9. Sistema de Triggers para Habilidades
+
+Las habilidades pueden responder a eventos del juego mediante **triggers** (hooks). Esto permite mecánicas complejas sin hardcodear comportamientos específicos.
+
+#### Triggers Disponibles
+
+Todos los triggers están definidos en la clase base `Ability` y pueden ser sobrescritos en habilidades concretas:
+
+**Triggers de ciclo de vida**:
+- `on_equip(player: Player)`: Llamado cuando se equipa la habilidad en el loadout (antes del match)
+- `on_match_start(player: Player)`: Llamado al inicio del match (ej: aplicar buff de velocidad)
+
+**Triggers de combate** (solo `UsableAbility`):
+- `on_activate(caster: Player, aim_direction: Vector2)`: Llamado al usar la habilidad (después de pasar cooldown)
+- `on_hit_enemy(caster: Player, target: Player, projectile: Node2D)`: Llamado cuando un proyectil de esta habilidad impacta enemigo
+
+**Triggers de colisión**:
+- `on_collide_player(self_player: Player, other_player: Player)`: Llamado cuando el jugador colisiona con otro jugador
+- `on_collide_wall(player: Player, impact_point: Vector2, wall_normal: Vector2)`: Llamado cuando el jugador colisiona con pared
+
+#### Flujo de Ejecución de Triggers
+
+```
+1. Equipar loadout:
+   loadout.trigger_on_equip()
+   → ability.on_equip(player)
+
+2. Iniciar match:
+   loadout.trigger_on_match_start()
+   → ability.on_match_start(player)
+
+3. Usar habilidad:
+   ability.try_use(caster, aim_dir)
+   → ability.on_activate(caster, aim_dir)
+   → ability.execute(caster, aim_dir)  # Lógica principal
+
+4. Proyectil impacta enemigo:
+   projectile._on_body_entered(enemy)
+   → ability.on_hit_enemy(caster, enemy, projectile)
+
+5. Jugador colisiona con otro jugador:
+   player._handle_player_collisions()
+   → loadout.trigger_on_collide_player(self, other)
+   → ability.on_collide_player(self, other)
+
+6. Jugador colisiona con pared:
+   player._handle_wall_collisions()
+   → loadout.trigger_on_collide_wall(player, point, normal)
+   → ability.on_collide_wall(player, point, normal)
+```
+
+#### Ejemplos de Uso de Triggers
+
+**Ejemplo 1: Pasiva de velocidad al inicio de match**
+```gdscript
+# PassiveSpeedBoost.gd
+extends PassiveAbility
+
+func on_match_start(player: Player) -> void:
+    player.velocidad *= 1.2  # +20% velocidad
+    print("[PassiveSpeedBoost] Velocidad aumentada")
+```
+
+**Ejemplo 2: Habilidad que hace daño extra al contacto**
+```gdscript
+# ContactDamage.gd
+extends PassiveAbility
+
+func on_collide_player(self_player: Player, other_player: Player) -> void:
+    var damage = self_player.ataque * 0.5
+    other_player.take_damage(int(damage))
+    print("[ContactDamage] Daño por contacto aplicado")
+```
+
+**Ejemplo 3: Dash que empuja al enemigo contra la pared**
+```gdscript
+# DashAbility.gd
+extends UsableAbility
+
+func on_activate(caster: Player, aim_direction: Vector2) -> void:
+    # Aplicar velocidad instantánea en dirección del dash
+    caster.velocity = aim_direction.normalized() * 800.0
+    print("[Dash] Empuje direccional aplicado")
+```
+
+**Ejemplo 4: Proyectil que cura al impactar**
+```gdscript
+# VampireShot.gd
+extends UsableAbility
+
+func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
+    var heal_amount = 5
+    caster.heal(heal_amount)
+    print("[VampireShot] %d vida recuperada" % heal_amount)
+```
+
+#### Implementación Técnica
+
+- **`Loadout`** gestiona los triggers y los propaga a todas las habilidades equipadas
+- **`Projectile`** almacena referencias a `source_ability` y `source_player` para invocar `on_hit_enemy`
+- **`Player`** detecta colisiones en `_physics_process()` y llama a los triggers del loadout
+- Las habilidades **no necesitan implementar todos los triggers**, solo los relevantes (implementación por defecto vacía en `Ability`)
 
 ---
 
@@ -393,6 +564,7 @@ Cada elemento tiene un **disparo básico** que funciona con la misma mecánica:
 - Al impactar enemigo:
   - Aplica daño según fórmula de stats (Ataque vs Defensa)
   - Produce knockback pequeño alejando a la víctima
+  - Trigger `on_hit_enemy` disponible para efectos adicionales
 - Propiedades:
   - Velocidad: 400 px/s
   - Duración: 3 segundos
@@ -400,6 +572,8 @@ Cada elemento tiene un **disparo básico** que funciona con la misma mecánica:
 - Visuales placeholder: círculos coloreados hexagonales
 
 **Implementación**: `ElementalShot` hereda de `UsableAbility`, instancia escena `projectile_elemental.tscn`
+
+**Sistema de Triggers**: Todos los disparos elementales pueden sobrescribir triggers como `on_activate`, `on_hit_enemy`, `on_match_start` para agregar efectos especiales (ver sección 9: Sistema de Triggers)
 
 ### Combate y Jugadores
 

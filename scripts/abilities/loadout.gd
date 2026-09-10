@@ -63,3 +63,47 @@ func clear_loadout() -> void:
 	if passive_ability and owner_player:
 		passive_ability.remove(owner_player)
 	passive_ability = null
+
+
+## ========================================
+## Sistema de Triggers para Habilidades
+## ========================================
+
+## Trigger: Al equipar el loadout (inicio de match)
+func trigger_on_equip() -> void:
+	for ability in usable_abilities:
+		if ability:
+			ability.on_equip(owner_player)
+	
+	if passive_ability:
+		passive_ability.on_equip(owner_player)
+
+
+## Trigger: Al iniciar el match
+func trigger_on_match_start() -> void:
+	for ability in usable_abilities:
+		if ability:
+			ability.on_match_start(owner_player)
+	
+	if passive_ability:
+		passive_ability.on_match_start(owner_player)
+
+
+## Trigger: Al colisionar con otro jugador
+func trigger_on_collide_player(self_player: Player, other_player: Player) -> void:
+	for ability in usable_abilities:
+		if ability:
+			ability.on_collide_player(self_player, other_player)
+	
+	if passive_ability:
+		passive_ability.on_collide_player(self_player, other_player)
+
+
+## Trigger: Al colisionar con pared
+func trigger_on_collide_wall(player: Player, impact_point: Vector2, wall_normal: Vector2) -> void:
+	for ability in usable_abilities:
+		if ability:
+			ability.on_collide_wall(player, impact_point, wall_normal)
+	
+	if passive_ability:
+		passive_ability.on_collide_wall(player, impact_point, wall_normal)

@@ -40,3 +40,27 @@ func on_learn() -> void:
 ## Override en subclases
 func get_ability_type() -> String:
 	return "base"
+
+
+## ========================================
+## Sistema de Triggers
+## ========================================
+
+## Trigger: Al equipar la habilidad (inicio de loadout)
+func on_equip(player: Player) -> void:
+	pass
+
+
+## Trigger: Al iniciar el match
+func on_match_start(player: Player) -> void:
+	pass
+
+
+## Trigger: Al colisionar con otro jugador
+func on_collide_player(self_player: Player, other_player: Player) -> void:
+	pass
+
+
+## Trigger: Al colisionar con pared
+func on_collide_wall(player: Player, impact_point: Vector2, wall_normal: Vector2) -> void:
+	pass

@@ -18,6 +18,10 @@ var owner_id: int = -1
 var owner_ataque: int = 10
 var traveled_time: float = 0.0
 
+# Referencia a la habilidad que spawneó este proyectil (para triggers)
+var source_ability: UsableAbility = null
+var source_player: Player = null
+
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -48,6 +52,10 @@ func _on_body_entered(body: Node2D) -> void:
 		
 		body.take_damage(int(final_damage), owner_id, knockback_dir, knockback_strength)
 		
+		# Trigger: on_hit_enemy
+		if source_ability and source_player:
+			source_ability.on_hit_enemy(source_player, body, self)
+		
 		if not pierce:
 			queue_free()
 
@@ -57,10 +65,12 @@ func _on_area_entered(area: Area2D) -> void:
 	pass
 
 
-func initialize(spawn_pos: Vector2, spawn_dir: Vector2, owner_peer_id: int, ataque_stat: int = 10) -> void:
+func initialize(spawn_pos: Vector2, spawn_dir: Vector2, owner_peer_id: int, ataque_stat: int = 10, ability: UsableAbility = null, player: Player = null) -> void:
 	position = spawn_pos
 	direction = spawn_dir.normalized()
 	owner_id = owner_peer_id
 	owner_ataque = ataque_stat
+	source_ability = ability
+	source_player = player
 	
 	# TODO: Configurar autoridad de red
