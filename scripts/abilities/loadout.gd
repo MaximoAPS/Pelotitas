@@ -11,7 +11,9 @@ var owner_player: Player = null
 
 
 func _ready() -> void:
-	usable_abilities.resize(MAX_USABLE_ABILITIES)
+	# Initialize typed array with null slots (Godot 4 typed array compatibility)
+	for i in range(MAX_USABLE_ABILITIES):
+		usable_abilities.append(null)
 
 
 ## Equipa una habilidad usable en un slot (0-2)
@@ -58,7 +60,9 @@ func use_ability(slot: int, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
 ## Limpia todos los slots
 func clear_loadout() -> void:
 	usable_abilities.clear()
-	usable_abilities.resize(MAX_USABLE_ABILITIES)
+	# Initialize typed array with null slots (Godot 4 typed array compatibility)
+	for i in range(MAX_USABLE_ABILITIES):
+		usable_abilities.append(null)
 	
 	if passive_ability and owner_player:
 		passive_ability.remove(owner_player)
