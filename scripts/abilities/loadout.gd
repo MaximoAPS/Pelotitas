@@ -5,15 +5,15 @@ class_name Loadout
 const MAX_USABLE_ABILITIES = 3
 const MAX_PASSIVE_ABILITIES = 1
 
-var usable_abilities = []
+var usable_abilities: Array  # Explicitly untyped Array
 var passive_ability: PassiveAbility = null
 var owner_player: Player = null
 
 
-
 func _ready() -> void:
 	# Initialize untyped array with null slots
-	usable_abilities = [null, null, null]
+	usable_abilities = Array()
+	usable_abilities.resize(MAX_USABLE_ABILITIES)
 
 
 ## Equipa una habilidad usable en un slot (0-2)
@@ -59,10 +59,8 @@ func use_ability(slot: int, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
 
 ## Limpia todos los slots
 func clear_loadout() -> void:
-	usable_abilities.clear()
-	# Initialize typed array with null slots (Godot 4 typed array compatibility)
-	for i in range(MAX_USABLE_ABILITIES):
-		usable_abilities.append(null)
+	usable_abilities = Array()
+	usable_abilities.resize(MAX_USABLE_ABILITIES)
 	
 	if passive_ability and owner_player:
 		passive_ability.remove(owner_player)
