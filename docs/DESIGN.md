@@ -434,6 +434,108 @@ func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
 
 ---
 
+## Flujo de App v0.1
+
+### Secuencia de Pantallas
+
+El flujo básico de la aplicación para la versión 0.1 local:
+
+```
+Boot (1s splash)
+    ↓
+Main Menu
+    ├─→ Prueba Local → Arena Duelo → Results Screen
+    │                      ↓              ├─→ Otra vez (restart arena)
+    │                   (combate)         └─→ Menú principal
+    ├─→ Crear Servidor (stub, no implementado)
+    ├─→ Unirse a Partida (stub, no implementado)
+    └─→ Salir (cierra app)
+```
+
+### Descripción de Pantallas
+
+**1. Boot (`scenes/boot/boot.tscn`)**
+- Splash screen de 1 segundo
+- Carga recursos globales y autoloads
+- Transiciona automáticamente al menú principal
+- **NO auto-start** al arena (debug mode removido)
+
+**2. Main Menu (`scenes/menus/main_menu.tscn`)**
+- Título: "PELOTITAS" + subtítulo "v0.1 local"
+- Botones:
+  - **Prueba Local**: Inicia duelo 1v1 local (player vs dummy)
+  - **Crear Servidor**: Stub para networking futuro
+  - **Unirse a Partida**: Stub para networking futuro
+  - **Salir**: Cierra la aplicación
+- Layout centrado, botones grandes y mobile-friendly
+- Sin auto-start timer que salte al arena
+
+**3. Arena Duelo (`scenes/duel/arena_duelo.tscn`)**
+- Duelo 1v1: Player controlable vs Dummy estacionario
+- Player 1 (azul): Controlado por joystick/teclado
+- Player 2 (rojo/naranja): Dummy que NO se mueve, solo recibe daño
+- Física de colisiones y habilidades activas
+- HUD móvil con controles táctiles
+- **Victory detection**: Cuando un jugador muere (HP = 0), se llama `Game.end_duel()`
+
+**4. Results Screen (`scenes/ui/results_screen.tscn`)**
+- Overlay CanvasLayer sobre la arena
+- Muestra resultado:
+  - **"¡GANASTE!"** si el jugador local ganó
+  - **"PERDISTE"** si el jugador local perdió
+  - **"¡EMPATE!"** si ambos murieron simultáneamente
+- Botones:
+  - **Otra vez**: Reinicia el duelo (recarga arena con nuevo modo)
+  - **Menú principal**: Vuelve al menú principal
+- Aparece automáticamente cuando `Game.duel_ended` signal se emite
+
+### Flujo Técnico
+
+**Inicio de Duelo (Prueba Local)**:
+1. Usuario presiona "Prueba Local" en menú
+2. `MainMenu._on_local_test_pressed()` crea instancia de `DueloPorVida`
+3. Llama `Game.start_duel(mode)` (cambia estado a `IN_DUEL`)
+4. Cambia escena a `arena_duelo.tscn`
+
+**Durante Duelo**:
+1. `ArenaDuelo._ready()` spawns jugadores y registra en modo
+2. `Mode.register_player()` conecta signal `player.died` a `_on_player_died`
+3. Jugadores combaten usando habilidades y movimiento
+4. `Mode.process(delta)` actualiza lógica del modo cada frame
+
+**Fin de Duelo**:
+1. Jugador muere → `Player.take_damage()` detecta `current_health <= 0`
+2. `Player._die()` emite signal `died`
+3. `Mode._on_player_died()` → `DueloPorVida.on_player_death()`
+4. `DueloPorVida.check_victory_conditions()` verifica jugadores vivos
+5. `DueloPorVida._declare_victory(winner_id)` → `Game.end_duel(winner_id)`
+6. `Game.end_duel()` emite signal `duel_ended` y cambia estado a `POST_DUEL`
+7. `ArenaDuelo._on_duel_ended()` llama `results_screen.show_results(winner_id)`
+8. Results screen overlay aparece con botones de reinicio o menú
+
+**Restart o Return**:
+- **Otra vez**: `ResultsScreen._on_restart_pressed()` recrea modo y recarga escena actual
+- **Menú principal**: `ResultsScreen._on_main_menu_pressed()` cambia estado a `MAIN_MENU` y carga `main_menu.tscn`
+
+### Decisiones de Diseño
+
+**¿Por qué no auto-start al arena?**
+- Testing y debugging requieren acceso al menú
+- Usuario debe elegir explícitamente el modo de juego
+- Facilita testing de networking cuando se implemente
+
+**¿Por qué overlay en lugar de cambio de escena?**
+- Permite ver el estado final del duelo (posiciones, HP)
+- Más rápido que recargar toda la escena
+- Mejor UX para mobile (sin flash de carga)
+
+**¿Por qué reload_current_scene() para restart?**
+- Limpia todo el estado del duelo anterior
+- Garantiza spawn fresco de jugadores y proyectiles
+- Evita bugs de estado persistente
+
+---
+
 ## Arquitectura del Proyecto
 
 ### Estructura de Carpetas
