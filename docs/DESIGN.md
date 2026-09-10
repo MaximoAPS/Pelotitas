@@ -45,12 +45,17 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 - **Path local/bots** para testing e iteración sin oponente remoto
 - Optimización de red para WiFi/4G/5G móvil
 
-**Controles táctiles (Android-optimized)**:
-- **Joystick virtual** (izquierda inferior) para movimiento 360°
-- **3 botones grandes** (derecha inferior) para habilidades usables, tamaño touch-friendly
-- **Indicador pasivo** (centro derecho) muestra habilidad pasiva equipada
-- **HUD superior** con barra de vida y cooldowns
-- Feedback visual al presionar (futura: vibración háptica)
+**Controles táctiles (Android-optimized) - Layout bloqueado**:
+
+Layout estilo **twin-stick-ish** (stick izquierda, botones derecha):
+
+- **Palanca / Joystick virtual** (izquierda inferior): Movimiento 360° con deadzone
+- **3 botones grandes** (derecha inferior): Habilidades usables (1, 2, 3), tamaño touch-friendly
+- **Habilidad pasiva**: NO tiene botón - siempre está activa automáticamente
+- **HUD superior**: Barra de vida, cooldowns visuales (futuro)
+- **Feedback**: Visual al presionar (futura: vibración háptica Android)
+
+Este layout es definitivo y no debe cambiarse sin aprobación.
 
 ### 4. Sistema de Modos Modular
 
@@ -105,8 +110,14 @@ Pelotita "Chispa":
 
 Cada pelotita equipa **3 habilidades usables + 1 pasiva** antes de entrar al duelo.
 
-- **Habilidades usables**: se activan con teclas (1, 2, 3)
-- **Habilidad pasiva**: efecto permanente (ej: +10% velocidad, regeneración)
+- **Habilidades usables**: se activan con botones táctiles (1, 2, 3) o teclas en desktop
+  - Tienen cooldown
+  - Requieren presionar botón para ejecutar
+  - Cada una tiene su propio slot en el HUD (derecha inferior)
+- **Habilidad pasiva**: efecto permanente automático (ej: +10% velocidad, regeneración)
+  - NO tiene botón en el HUD
+  - Siempre está activa durante el duelo
+  - Efecto aplicado automáticamente al jugador
 
 ---
 
@@ -235,11 +246,12 @@ Ability (Resource base)
 - Sincronización de red (solo owner controla movimiento)
 
 **Mobile HUD** (`scenes/ui/mobile_hud.tscn/.gd`):
-- Joystick virtual táctil (izquierda inferior)
-- 3 botones de habilidades grandes y touch-friendly (derecha inferior)
-- Indicador de habilidad pasiva
-- Barra de vida superior
-- Actualización de cooldowns (stub)
+- **Layout twin-stick-ish bloqueado**:
+  - Palanca/joystick virtual táctil (izquierda inferior)
+  - 3 botones de habilidades usables, grandes y touch-friendly (derecha inferior)
+  - Barra de vida superior
+  - Cooldowns visuales (stub - futuro: overlay en botones)
+- **Sin botón para pasiva**: la habilidad pasiva es automática, no requiere UI
 
 **Projectile** (`scripts/combat/projectile.gd`):
 - Movimiento en línea recta

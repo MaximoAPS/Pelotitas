@@ -1,11 +1,12 @@
 extends CanvasLayer
-## HUD móvil con controles táctiles
+## HUD móvil con controles táctiles (layout twin-stick-ish)
 ##
-## Incluye:
-## - Joystick virtual (izquierda inferior)
-## - 3 botones de habilidades usables (derecha inferior)
-## - Indicador de habilidad pasiva
+## Layout bloqueado:
+## - Joystick virtual / palanca (izquierda inferior): movimiento 360°
+## - 3 botones de habilidades usables (derecha inferior): habilidades 1, 2, 3
 ## - Barra de vida (superior)
+##
+## Nota: La habilidad pasiva NO tiene botón (siempre activa)
 
 @onready var joystick_base = $VirtualJoystick/Base
 @onready var joystick_stick = $VirtualJoystick/Stick

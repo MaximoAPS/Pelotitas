@@ -80,7 +80,7 @@ pelotitas/
 
 ### Sistemas Clave
 
-- **Android-First**: Controles táctiles optimizados (joystick virtual + botones grandes)
+- **Android-First**: Layout twin-stick-ish (palanca izq + 3 botones der) optimizado para touch
 - **Modos de Juego Modulares**: arquitectura plug-in para agregar nuevos modos sin modificar el núcleo
 - **Multiplayer Online**: servidor autoritativo optimizado para redes móviles (WiFi/4G/5G)
 - **Progresión Elemental**: sistema de afinidad secreta que determina qué puntos de habilidad obtienes al subir de nivel
@@ -91,11 +91,11 @@ pelotitas/
 
 ## Controles
 
-### Mobile (Touch)
-- **Joystick virtual** (izquierda inferior): Movimiento 360°
-- **Botones 1, 2, 3** (derecha inferior): Habilidades usables
-- **Indicador pasivo** (centro derecho): Muestra habilidad pasiva equipada
-- **Barra de vida** (superior): HP actual
+### Mobile (Touch) - Layout Twin-Stick-ish
+- **Palanca / Joystick virtual** (izquierda inferior): Movimiento 360° con deadzone
+- **Botones 1, 2, 3** (derecha inferior): Habilidades usables con cooldown
+- **Habilidad pasiva**: Sin botón - siempre activa automáticamente
+- **Barra de vida** (superior): HP actual en tiempo real
 
 ### Desktop (Testing/Desarrollo)
 - **WASD / Arrow keys**: Movimiento (fallback automático)
