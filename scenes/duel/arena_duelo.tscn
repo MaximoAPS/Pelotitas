@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bo2nwp5x1aq0h"]
+[gd_scene load_steps=4 format=3 uid="uid://bo2nwp5x1aq0h"]
 
 [ext_resource type="Script" path="res://scenes/duel/arena_duelo.gd" id="1_arena"]
 [ext_resource type="PackedScene" uid="uid://dtxrnwvp1x0gp" path="res://scenes/duel/player_prefab.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://cq8r4wx2bhm5j" path="res://scenes/ui/mobile_hud.tscn" id="3_hud"]
 
 [node name="ArenaDuelo" type="Node2D"]
 script = ExtResource("1_arena")
@@ -28,15 +29,6 @@ position = Vector2(1080, 360)
 [node name="Projectiles" type="Node2D" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(640, 360)
+position = Vector2(960, 540)
 
-[node name="UI" type="CanvasLayer" parent="."]
-
-[node name="DebugLabel" type="Label" parent="UI"]
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 300.0
-offset_bottom = 100.0
-text = "Arena de Duelo
-WASD: Mover
-1,2,3: Habilidades"
+[node name="MobileHUD" parent="." instance=ExtResource("3_hud")]

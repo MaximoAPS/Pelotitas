@@ -21,6 +21,10 @@ var loadout: Loadout = null
 
 func _ready() -> void:
 	current_health = max_health
+	
+	# Conectar señales de TouchInput
+	TouchInput.ability_pressed.connect(_on_ability_pressed)
+	
 	# TODO: Configurar sincronización de red (MultiplayerSynchronizer)
 	# TODO: Aplicar autoridad de red según peer_id
 
@@ -34,10 +38,16 @@ func _physics_process(delta: float) -> void:
 
 
 func _handle_input() -> void:
-	var input_dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	# Movimiento: prioritizar touch input, fallback a teclado para testing en desktop
+	var input_dir = TouchInput.get_move_direction()
+	
+	if input_dir == Vector2.ZERO:
+		# Fallback para testing en desktop
+		input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	
 	velocity = input_dir * move_speed
 	
-	# Habilidades
+	# Habilidades: manejadas por señales de TouchInput o teclas de debug
 	if Input.is_action_just_pressed("ability_1") and loadout:
 		loadout.use_ability(0)
 	if Input.is_action_just_pressed("ability_2") and loadout:
@@ -74,3 +84,8 @@ func set_loadout(new_loadout: Loadout) -> void:
 	loadout = new_loadout
 	if loadout:
 		loadout.owner_player = self
+
+
+func _on_ability_pressed(slot: int) -> void:
+	if loadout:
+		loadout.use_ability(slot)

@@ -2,7 +2,10 @@
 
 ## Visión General
 
-Juego online 2D top-down de batallas entre pelotitas elementales. Arquitectura modular y escalable pensada para agregar nuevos modos, habilidades y mecánicas sin reescribir código existente.
+Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementales. Arquitectura modular y escalable pensada para agregar nuevos modos, habilidades y mecánicas sin reescribir código existente.
+
+**Plataforma primaria**: Mobile (Android/iOS) con controles táctiles  
+**Plataformas secundarias**: Desktop y web para desarrollo y testing
 
 **Estado actual**: Scaffolding inicial - solo estructura base y stubs, no gameplay completo.
 
@@ -27,14 +30,23 @@ Juego online 2D top-down de batallas entre pelotitas elementales. Arquitectura m
 - La física y las escenas son **completamente 2D**
 - Las esferas se renderizan con **sombreado y highlights** para dar sensación de volumen 3D
 - Estilo visual estilizado (no realista)
+- **Orientación landscape** (horizontal) para combate en arena
 
-### 3. Multijugador
+### 3. Multijugador y Plataforma
 
-**Online desde el día 1**:
+**Mobile-first con PvP online**:
 
+- **Plataforma primaria**: Android/iOS con controles táctiles
+- **Plataformas secundarias**: Desktop/web para desarrollo y testing
 - Sistema de autoridad de red (Godot High-Level Multiplayer API)
 - **Servidor autoritativo** para combate y física
 - **Path local/bots** para testing e iteración sin oponente remoto
+
+**Controles táctiles**:
+- **Joystick virtual** (izquierda inferior) para movimiento 360°
+- **3 botones grandes** (derecha inferior) para habilidades usables
+- **Indicador pasivo** (centro derecho) muestra habilidad pasiva equipada
+- **HUD superior** con barra de vida y cooldowns
 
 ### 4. Sistema de Modos Modular
 
@@ -110,10 +122,13 @@ pelotitas/
 │   ├── menus/
 │   │   ├── main_menu.tscn
 │   │   └── main_menu.gd
-│   └── duel/
-│       ├── arena_duelo.tscn
-│       ├── arena_duelo.gd
-│       └── player_prefab.tscn
+│   ├── duel/
+│   │   ├── arena_duelo.tscn
+│   │   ├── arena_duelo.gd
+│   │   └── player_prefab.tscn
+│   └── ui/
+│       ├── mobile_hud.tscn
+│       └── mobile_hud.gd
 ├── scripts/
 │   ├── core/
 │   │   ├── game.gd          (Autoload: estado global)
@@ -161,6 +176,12 @@ pelotitas/
    - Otorga puntos de habilidad en level-ups
    - Maneja aprendizaje de skills
 
+4. **TouchInput** (`scripts/core/touch_input.gd`)
+   - Manejo de controles táctiles móviles
+   - Joystick virtual con deadzone
+   - Emite señales para movimiento y habilidades
+   - Fallback a teclado para testing en desktop
+
 ### Sistema de Modos
 
 **Clase base**: `Mode` (`scripts/modes/mode.gd`)
@@ -204,10 +225,17 @@ Ability (Resource base)
 ### Combate y Jugadores
 
 **Player** (`scripts/combat/player.gd`):
-- Movimiento WASD
+- Movimiento con joystick virtual (touch) o WASD (desktop fallback)
 - Vida y daño
-- Usa habilidades del loadout (teclas 1, 2, 3)
+- Usa habilidades del loadout (botones táctiles o teclas 1, 2, 3)
 - Sincronización de red (solo owner controla movimiento)
+
+**Mobile HUD** (`scenes/ui/mobile_hud.tscn/.gd`):
+- Joystick virtual táctil (izquierda inferior)
+- 3 botones de habilidades grandes y touch-friendly (derecha inferior)
+- Indicador de habilidad pasiva
+- Barra de vida superior
+- Actualización de cooldowns (stub)
 
 **Projectile** (`scripts/combat/projectile.gd`):
 - Movimiento en línea recta
@@ -222,7 +250,17 @@ Ability (Resource base)
 - [ ] Implementar MultiplayerSynchronizer en Player
 - [ ] Lobby para esperar jugadores
 - [ ] Sincronizar spawn de proyectiles
-- [ ] Manejo de latencia y desconexiones
+- [ ] Manejo de latencia y desconexiones (crítico en mobile)
+- [ ] Optimización de ancho de banda para redes móviles
+
+### Mobile-Specific
+- [ ] Testing en dispositivos Android reales
+- [ ] Optimización de rendimiento para móviles gama media/baja
+- [ ] Configuración de export templates (Android/iOS)
+- [ ] Vibración háptica en habilidades y daño
+- [ ] Ajuste de tamaños de botones según DPI
+- [ ] Manejo de diferentes aspect ratios móviles
+- [ ] Pausa automática al perder foco (llamada entrante, etc.)
 
 ### Habilidades
 - [ ] Implementar habilidades elementales concretas
@@ -271,8 +309,29 @@ Ability (Resource base)
 
 ---
 
+## Configuración Mobile
+
+### project.godot - Settings Clave
+
+- **Orientación**: Landscape (sensor_landscape = 6)
+- **Resolución base**: 1920x1080 (escalado a diferentes dispositivos)
+- **Stretch mode**: `canvas_items` con aspect `expand`
+- **Touch emulation**: Habilitado en editor para testing con mouse
+- **Export templates**: Android primero, iOS-ready (requiere Mac para build)
+
+### Controles de Testing Desktop
+
+Para desarrollo en PC/Mac sin touch:
+- **Arrow keys / WASD**: Movimiento (fallback automático)
+- **1, 2, 3**: Habilidades
+- **Mouse click + drag**: Emula joystick virtual
+
 ## Notas Finales
 
 Este documento debe **actualizarse** cuando se tomen nuevas decisiones de diseño o se implementen sistemas críticos.
 
-**Prioridad actual**: Completar red y sincronización multiplayer, luego implementar 3-5 habilidades básicas por elemento para hacer el primer modo jugable.
+**Prioridad actual**: 
+1. Testing en dispositivo Android real
+2. Completar red y sincronización multiplayer optimizada para mobile
+3. Implementar 3-5 habilidades básicas por elemento
+4. Optimización de rendimiento para móviles gama media
