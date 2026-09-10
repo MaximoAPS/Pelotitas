@@ -91,10 +91,21 @@ pelotitas/
 
 ## Controles
 
-### Mobile (Touch) - Layout Twin-Stick-ish
+### Mobile (Touch) - Press-Hold-Drag-Release para Apuntado
+
+**Movimiento**:
 - **Palanca / Joystick virtual** (izquierda inferior): Movimiento 360° con deadzone
-- **Botones 1, 2, 3** (derecha inferior): Habilidades usables con cooldown
-- **Habilidad pasiva**: Sin botón - siempre activa automáticamente
+
+**Habilidades** (derecha inferior):
+- **Press y hold** en botón (1, 2, o 3): Inicia apuntado
+- **Drag** en la dirección deseada: Apunta hacia donde lanzar
+- **Release**: Dispara la habilidad en esa dirección
+- Cooldowns entre usos
+
+**Pasiva**:
+- Sin botón - siempre activa automáticamente
+
+**HUD**:
 - **Barra de vida** (superior): HP actual en tiempo real
 
 ### Desktop (Testing/Desarrollo)

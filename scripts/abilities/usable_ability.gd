@@ -14,13 +14,13 @@ func get_ability_type() -> String:
 	return "usable"
 
 
-## Intenta usar la habilidad
-func try_use(caster: Player) -> bool:
+## Intenta usar la habilidad con dirección de apuntado
+func try_use(caster: Player, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
 	if not can_use():
 		return false
 	
 	last_use_time = Time.get_ticks_msec() / 1000.0
-	execute(caster)
+	execute(caster, aim_direction)
 	return true
 
 
@@ -36,10 +36,12 @@ func get_cooldown_remaining() -> float:
 
 
 ## Override en habilidades concretas
-func execute(caster: Player) -> void:
+## aim_direction: dirección normalizada en la que el jugador apuntó (desde press-hold-drag-release)
+func execute(caster: Player, aim_direction: Vector2) -> void:
 	push_warning("[UsableAbility] execute() no implementado para %s" % ability_id)
-	# TODO: Implementar en subclases:
-	# - Spawns de proyectiles
-	# - Invocación de summons
-	# - Creación de muros
-	# - Efectos de área
+	print("[UsableAbility] Dirección de apuntado: %v" % aim_direction)
+	# TODO: Implementar en subclases usando aim_direction:
+	# - Spawns de proyectiles en aim_direction
+	# - Invocación de summons facing aim_direction
+	# - Creación de muros perpendiculares a aim_direction
+	# - Efectos de área centrados en caster + aim_direction offset

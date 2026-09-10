@@ -45,17 +45,64 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 - **Path local/bots** para testing e iteración sin oponente remoto
 - Optimización de red para WiFi/4G/5G móvil
 
-**Controles táctiles (Android-optimized) - Layout bloqueado**:
+**Controles táctiles (Android-optimized) - Layout y mecánicas bloqueadas**:
 
 Layout estilo **twin-stick-ish** (stick izquierda, botones derecha):
 
-- **Palanca / Joystick virtual** (izquierda inferior): Movimiento 360° con deadzone
-- **3 botones grandes** (derecha inferior): Habilidades usables (1, 2, 3), tamaño touch-friendly
-- **Habilidad pasiva**: NO tiene botón - siempre está activa automáticamente
-- **HUD superior**: Barra de vida, cooldowns visuales (futuro)
-- **Feedback**: Visual al presionar (futura: vibración háptica Android)
+```
+┌──────────────────────────────────────────────┐
+│ [███ HP 100/100 ██████████████]              │  ← Barra de vida
+│                                              │
+│                         →                    │  ← Indicador de apuntado
+│                    ARENA        (hold+drag)  │     (visual feedback)
+│                                              │
+│                                              │
+│                                              │
+│  [  ◉  ]                        [ 1 ]        │  ← Izquierda: Palanca
+│   PALANCA                       [ 2 ]        │  ← Derecha: 3 botones
+│                                 [ 3 ]        │     (press-hold-drag-release)
+└──────────────────────────────────────────────┘
+```
 
-Este layout es definitivo y no debe cambiarse sin aprobación.
+### Mecánicas de Control
+
+**Movimiento (Palanca / Joystick virtual - izquierda inferior)**:
+- Movimiento 360° con deadzone
+- Drag dentro del área de la palanca
+- Independiente del sistema de habilidades
+
+**Habilidades usables (3 botones - derecha inferior)**:
+
+Sistema **press-and-hold-drag-release** para apuntado preciso:
+
+1. **Press y hold** en botón de habilidad (1, 2, o 3)
+   - Inicia modo de apuntado
+   - Habilidad no se activa todavía
+   - Visual feedback: botón resaltado
+
+2. **Drag** en la dirección deseada
+   - Mientras mantienes presionado, arrastra el dedo
+   - La dirección del arrastre determina hacia dónde se lanzará la habilidad
+   - Visual feedback: flecha/línea de apuntado desde el jugador (TODO)
+
+3. **Release** para disparar
+   - Suelta el dedo para activar la habilidad
+   - La habilidad se lanza en la dirección que arrastraste
+   - Si no hay arrastre significativo (< 30px), usa dirección por defecto (derecha)
+
+**Habilidad pasiva**: 
+- NO tiene botón - siempre está activa automáticamente en segundo plano
+- Sin interacción del jugador requerida
+
+**HUD superior**: 
+- Barra de vida
+- Cooldowns visuales en botones (futuro: overlay circular)
+
+**Feedback**: 
+- Visual al presionar y durante drag
+- Vibración háptica Android al disparar (futuro)
+
+⚠️ **Este layout y mecánica de control son definitivos** y no deben cambiarse sin aprobación del usuario.
 
 ### 4. Sistema de Modos Modular
 

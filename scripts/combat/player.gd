@@ -22,8 +22,8 @@ var loadout: Loadout = null
 func _ready() -> void:
 	current_health = max_health
 	
-	# Conectar señales de TouchInput
-	TouchInput.ability_pressed.connect(_on_ability_pressed)
+	# Conectar señales de TouchInput (press-hold-drag-release)
+	TouchInput.ability_fired.connect(_on_ability_fired)
 	
 	# TODO: Configurar sincronización de red (MultiplayerSynchronizer)
 	# TODO: Aplicar autoridad de red según peer_id
@@ -86,6 +86,7 @@ func set_loadout(new_loadout: Loadout) -> void:
 		loadout.owner_player = self
 
 
-func _on_ability_pressed(slot: int) -> void:
+func _on_ability_fired(slot: int, aim_direction: Vector2) -> void:
 	if loadout:
-		loadout.use_ability(slot)
+		# TODO: Pasar aim_direction a la habilidad para spawning direccional
+		loadout.use_ability(slot, aim_direction)

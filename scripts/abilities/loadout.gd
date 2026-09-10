@@ -39,8 +39,8 @@ func equip_passive(ability: PassiveAbility) -> bool:
 	return true
 
 
-## Usa una habilidad del slot (0-2)
-func use_ability(slot: int) -> bool:
+## Usa una habilidad del slot (0-2) con dirección de apuntado
+func use_ability(slot: int, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
 	if slot < 0 or slot >= MAX_USABLE_ABILITIES:
 		return false
 	
@@ -52,7 +52,7 @@ func use_ability(slot: int) -> bool:
 		push_error("[Loadout] No hay owner_player asignado")
 		return false
 	
-	return ability.try_use(owner_player)
+	return ability.try_use(owner_player, aim_direction)
 
 
 ## Limpia todos los slots

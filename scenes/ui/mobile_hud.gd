@@ -3,8 +3,13 @@ extends CanvasLayer
 ##
 ## Layout bloqueado:
 ## - Joystick virtual / palanca (izquierda inferior): movimiento 360°
-## - 3 botones de habilidades usables (derecha inferior): habilidades 1, 2, 3
+## - 3 botones de habilidades usables (derecha inferior): press-hold-drag-release para apuntar
 ## - Barra de vida (superior)
+##
+## Sistema de apuntado de habilidades:
+## 1. Press y hold en botón de habilidad
+## 2. Drag en la dirección deseada
+## 3. Release para disparar en esa dirección
 ##
 ## Nota: La habilidad pasiva NO tiene botón (siempre activa)
 
@@ -12,10 +17,14 @@ extends CanvasLayer
 @onready var joystick_stick = $VirtualJoystick/Stick
 @onready var health_bar = $TopBar/HealthBar
 @onready var health_label = $TopBar/HealthBar/Label
+@onready var ability_buttons = [$AbilityButtons/Ability1, $AbilityButtons/Ability2, $AbilityButtons/Ability3]
 
 var joystick_initial_pos: Vector2
 var is_joystick_active: bool = false
 var current_touch_index: int = -1
+
+# Tracking de habilidades siendo apuntadas
+var ability_touch_tracking: Dictionary = {}  # {touch_index: ability_slot}
 
 
 func _ready() -> void:
@@ -56,16 +65,38 @@ func _on_move_direction_changed(direction: Vector2) -> void:
 		joystick_stick.position = joystick_initial_pos + offset
 
 
+## Manejo de habilidades con press-hold-drag-release
+func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			# Press: Iniciar apuntado
+			TouchInput.start_ability_aim(slot, event.position, event.index)
+			ability_touch_tracking[event.index] = slot
+			# TODO: Mostrar indicador visual de apuntado
+		else:
+			# Release: Disparar habilidad
+			if ability_touch_tracking.has(event.index) and ability_touch_tracking[event.index] == slot:
+				TouchInput.fire_ability()
+				ability_touch_tracking.erase(event.index)
+	
+	elif event is InputEventScreenDrag:
+		# Drag: Actualizar dirección de apuntado
+		if ability_touch_tracking.has(event.index) and ability_touch_tracking[event.index] == slot:
+			TouchInput.update_ability_aim(event.position)
+			# TODO: Actualizar indicador visual de dirección
+
+
+# Conectar eventos de botones a la función común
 func _on_ability_1_pressed() -> void:
-	TouchInput.press_ability(0)
+	pass  # Manejado por gui_input
 
 
 func _on_ability_2_pressed() -> void:
-	TouchInput.press_ability(1)
+	pass  # Manejado por gui_input
 
 
 func _on_ability_3_pressed() -> void:
-	TouchInput.press_ability(2)
+	pass  # Manejado por gui_input
 
 
 ## Actualiza la barra de vida (llamar desde el script del jugador)
