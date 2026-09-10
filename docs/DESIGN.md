@@ -166,6 +166,55 @@ Cada pelotita equipa **3 habilidades usables + 1 pasiva** antes de entrar al due
   - Siempre está activa durante el duelo
   - Efecto aplicado automáticamente al jugador
 
+### 7. Stats de Combate
+
+Cada pelotita tiene tres estadísticas base que afectan su desempeño en combate:
+
+#### Stats Principales
+
+- **Ataque**: Determina el daño que inflige la pelotita con sus habilidades
+- **Defensa**: Reduce el daño recibido de ataques enemigos
+- **Velocidad**: Afecta la velocidad de movimiento de la pelotita
+
+#### Fórmula de Daño
+
+El daño final aplicado cuando un proyectil impacta a un enemigo se calcula como:
+
+```
+Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
+```
+
+**Explicación**:
+- El ataque del atacante se reduce por la mitad de la defensa de la víctima
+- El daño mínimo es siempre 1 (no puede ser 0 o negativo)
+- Valores típicos iniciales: Ataque 10, Defensa 5 → Daño = max(1, 10 - 5×0.5) = 7.5 ≈ 8
+
+**Ejemplo de cálculo**:
+```
+Pelotita A (Ataque: 15) ataca a Pelotita B (Defensa: 8)
+Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
+```
+
+#### Velocidad de Movimiento
+
+La velocidad final de movimiento se calcula como:
+
+```
+Velocidad de Movimiento = velocidad_base + (stat_velocidad × 5.0)
+```
+
+- `velocidad_base`: 200 píxeles por segundo (configurable)
+- `stat_velocidad`: Estadística de velocidad de la pelotita (por defecto: 10)
+- Con velocidad 10: 200 + (10 × 5) = 250 px/s
+
+#### Knockback (Retroceso)
+
+Cuando un proyectil impacta a una pelotita:
+- La víctima es empujada en dirección opuesta al impacto
+- La fuerza de knockback es fija: **150 píxeles/segundo** inicialmente
+- El knockback puede escalarse ligeramente con el ataque en el futuro
+- Propósito: Separar combatientes y crear dinámica posicional
+
 ---
 
 ## Arquitectura del Proyecto
@@ -284,12 +333,37 @@ Ability (Resource base)
 3. Definir cooldown, costo, elemento
 4. Agregar a skill tree
 
+#### Habilidades Elementales Básicas
+
+Cada elemento tiene un **disparo básico** que funciona con la misma mecánica:
+
+**Disparos Elementales** (Fuego, Agua, Tierra, Viento):
+- Mecánica unificada: proyectil direccional activado con press-hold-drag-release
+- Diferenciados por elemento y color visual:
+  - **Fuego**: Rojo/naranja (Color(1, 0.2, 0, 1))
+  - **Agua**: Azul (Color(0, 0.4, 1, 1))
+  - **Tierra**: Marrón (Color(0.6, 0.4, 0.2, 1))
+  - **Viento**: Verde claro (Color(0.7, 1, 0.7, 1))
+- Al impactar enemigo:
+  - Aplica daño según fórmula de stats (Ataque vs Defensa)
+  - Produce knockback pequeño alejando a la víctima
+- Propiedades:
+  - Velocidad: 400 px/s
+  - Duración: 3 segundos
+  - Cooldown: 1 segundo
+- Visuales placeholder: círculos coloreados hexagonales
+
+**Implementación**: `ElementalShot` hereda de `UsableAbility`, instancia escena `projectile_elemental.tscn`
+
 ### Combate y Jugadores
 
 **Player** (`scripts/combat/player.gd`):
 - Movimiento con joystick virtual (touch) o WASD (desktop fallback)
+- **Stats de combate**: Ataque, Defensa, Velocidad
+  - Velocidad afecta directamente la velocidad de movimiento
 - Vida y daño
 - Usa habilidades del loadout (botones táctiles o teclas 1, 2, 3)
+- Recibe knockback al ser impactado
 - Sincronización de red (solo owner controla movimiento)
 
 **Mobile HUD** (`scenes/ui/mobile_hud.tscn/.gd`):
@@ -302,8 +376,10 @@ Ability (Resource base)
 
 **Projectile** (`scripts/combat/projectile.gd`):
 - Movimiento en línea recta
-- Colisión y daño
+- Colisión y daño basado en stats del caster (Ataque) y del target (Defensa)
+- Aplica knockback direccional al impactar
 - Opciones: pierce, lifetime, velocidad
+- Los proyectiles portan el stat de Ataque del caster para calcular daño dinámicamente
 
 ---
 

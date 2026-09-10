@@ -12,7 +12,12 @@ signal health_changed(new_health: int, max_health: int)
 signal died()
 
 @export var max_health: int = 100
-@export var move_speed: float = 200.0
+@export var base_move_speed: float = 200.0
+
+@export_group("Stats")
+@export var ataque: int = 10
+@export var defensa: int = 5
+@export var velocidad: int = 10
 
 var current_health: int = 100
 var pelotita_id: String = ""
@@ -45,6 +50,8 @@ func _handle_input() -> void:
 		# Fallback para testing en desktop
 		input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	
+	# Movimiento basado en stat de velocidad
+	var move_speed = base_move_speed + (velocidad * 5.0)
 	velocity = input_dir * move_speed
 	
 	# Habilidades: manejadas por señales de TouchInput o teclas de debug
@@ -56,13 +63,17 @@ func _handle_input() -> void:
 		loadout.use_ability(2)
 
 
-func take_damage(amount: int, attacker_id: int = -1) -> void:
+func take_damage(amount: int, attacker_id: int = -1, knockback_direction: Vector2 = Vector2.ZERO, knockback_strength: float = 0.0) -> void:
 	if not Net.has_authority(self):
 		return  # Solo el servidor/authority aplica daño
 	
 	current_health = max(0, current_health - amount)
 	health_changed.emit(current_health, max_health)
 	print("[Player] %s recibió %d de daño, vida: %d/%d" % [pelotita_id, amount, current_health, max_health])
+	
+	# Aplicar knockback
+	if knockback_direction != Vector2.ZERO and knockback_strength > 0:
+		velocity = knockback_direction.normalized() * knockback_strength
 	
 	if current_health <= 0:
 		_die()
