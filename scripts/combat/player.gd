@@ -61,9 +61,11 @@ func _physics_process(delta: float) -> void:
 	if not is_dummy and not offline_mode and not Net.has_authority(self):
 		return  # Solo el owner controla movimiento (excepto dummies y offline)
 	
-	# Solo procesar input si NO es dummy
+	# Process input or AI
 	if not is_dummy:
 		_handle_input(delta)
+	else:
+		_handle_dummy_ai(delta)
 	
 	var previous_velocity = velocity
 	var collision = move_and_slide()
@@ -122,6 +124,38 @@ func _handle_input(delta: float) -> void:
 		loadout.use_ability(1, fire_dir)
 	if Input.is_action_just_pressed("ability_3") and loadout:
 		loadout.use_ability(2, fire_dir)
+
+
+func _handle_dummy_ai(delta: float) -> void:
+	# Arena center for 1920x1080
+	const ARENA_CENTER = Vector2(960, 540)
+	const CENTER_RADIUS = 80.0  # Distance threshold to consider "at center"
+	
+	# Calculate direction to center
+	var to_center = ARENA_CENTER - global_position
+	var distance_to_center = to_center.length()
+	
+	# Velocidad máxima: same as player
+	var max_speed = speed_m_s * PIXELS_PER_METER
+	
+	if distance_to_center > CENTER_RADIUS:
+		# Seek toward center with acceleration
+		var seek_dir = to_center.normalized()
+		var desired_velocity = seek_dir * max_speed
+		velocity = velocity.move_toward(desired_velocity, aceleracion * delta)
+	else:
+		# Close to center: damp velocity
+		var speed = velocity.length()
+		if speed > 0:
+			var damping_amount = friccion * delta * 1.5  # Slightly stronger damping at center
+			if speed <= damping_amount:
+				velocity = Vector2.ZERO
+			else:
+				velocity -= velocity.normalized() * damping_amount
+	
+	# Clamp velocity magnitude to max speed
+	if velocity.length() > max_speed:
+		velocity = velocity.normalized() * max_speed
 
 
 func take_damage(amount: int, attacker_id: int = -1, knockback_direction: Vector2 = Vector2.ZERO, knockback_strength: float = 0.0) -> void:
