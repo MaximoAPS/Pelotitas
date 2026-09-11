@@ -2512,20 +2512,35 @@ func join_host(ip: String, port: int = 7777):
 - ¿Ranked vs casual?
 - ¿Regiones (latencia)?
 
-### 7.3 Latencia y Desconexión (TBD)
+### 7.3 Latencia y Desconexión ✅ LOCKED MVP
 
-**Locked para MVP**:
-- Sin lag compensation avanzado
-- Sin client-side prediction sofisticado
-- ENet maneja retransmisión básica de paquetes
+**Decisión locked para MVP**:
+- ✅ **NO ping/latency UI** (sin indicador de lag visual)
+- ✅ **NO kick rules por latencia** (sin auto-kick por lag)
+- ✅ **LAN WiFi only**: Alcance limitado a misma red local (baja latencia esperada)
+- ✅ **Sin lag compensation avanzado** (ENet básico suficiente para LAN)
+- ✅ **Sin client-side prediction sofisticado**
+- ✅ **ENet maneja retransmisión básica** de paquetes
 
-**TBD - Hay que definir**:
-- ¿Qué pasa si un jugador se desconecta mid-match?
-  - Opción A: match termina, desconectado pierde automáticamente
-  - Opción B: pausa de 10s para reconectar
-  - Opción C: AI toma control del desconectado (futuro)
-- ¿Timeout de conexión? (ej: 5s sin respuesta = desconexión)
-- ¿Mostrar indicador de lag en UI? (icono de WiFi rojo)
+**Razón de diseño**:
+- 📡 **LAN WiFi assumption**: Red local = latencia baja y estable (<50ms típico)
+- 🎯 **MVP scope**: Ping monitoring y kick rules añaden complejidad innecesaria para LAN
+- 🔧 **Simplicidad**: Sin UI de latencia, sin thresholds de kick, sin timeouts complejos
+- ⚡ **Out of scope for MVP**: Matchmaking por región, ping display, lag icons
+
+**Disconnect handling** (✅ locked en §13):
+- Disconnect timeout: 5-10s sin respuesta → forfeit automático
+- Disconnect = loss para desconectado, win + XP para opponent
+- Ver sección §13 para detalles completos
+
+**Post-MVP consideraciones** (futuro lejano):
+- Matchmaking online con ping-based regions
+- Lag compensation avanzado (rollback netcode)
+- Client-side prediction para movimiento
+- Icono de latencia en HUD (WiFi bars, ping ms)
+- Kick rules por high ping (>200ms sustained)
+
+**Estado**: ✅ LOCKED - No ping UI, no kick rules en MVP (LAN WiFi only)
 
 ---
 
