@@ -20,8 +20,8 @@ signal died()
 @export var masa: float = 1.0
 
 @export_group("Movement Tuning")
-@export var aceleracion: float = 900.0
-@export var friccion: float = 700.0
+@export var aceleracion: float = 0.0  # Will be calculated as vmax/4 dynamically
+@export var friccion: float = 0.0
 @export var rebote_jugador: float = 1.15
 @export var rebote_min_impulse: float = 50.0
 
@@ -95,20 +95,24 @@ func _handle_input(delta: float) -> void:
 	# speed_m_s ya está normalizado por media geométrica de participantes
 	var max_speed = speed_m_s * PIXELS_PER_METER
 	
+	# Calculate acceleration as vmax/4 (if not set manually)
+	var effective_accel = aceleracion if aceleracion > 0.0 else (max_speed / 4.0)
+	
 	# Inertia-based movement: apply acceleration toward input direction
 	if input_dir.length() > 0.01:
 		# Apply acceleration toward desired direction
 		var desired_velocity = input_dir.normalized() * max_speed
-		velocity = velocity.move_toward(desired_velocity, aceleracion * delta)
+		velocity = velocity.move_toward(desired_velocity, effective_accel * delta)
 	else:
-		# Apply friction when no input
-		var speed = velocity.length()
-		if speed > 0:
-			var friction_amount = friccion * delta
-			if speed <= friction_amount:
-				velocity = Vector2.ZERO
-			else:
-				velocity -= velocity.normalized() * friction_amount
+		# Apply friction when no input (friction=0 means no deceleration when idle)
+		if friccion > 0.0:
+			var speed = velocity.length()
+			if speed > 0:
+				var friction_amount = friccion * delta
+				if speed <= friction_amount:
+					velocity = Vector2.ZERO
+				else:
+					velocity -= velocity.normalized() * friction_amount
 	
 	# Clamp velocity magnitude to max speed
 	if velocity.length() > max_speed:
@@ -138,20 +142,24 @@ func _handle_dummy_ai(delta: float) -> void:
 	# Velocidad máxima: same as player
 	var max_speed = speed_m_s * PIXELS_PER_METER
 	
+	# Calculate acceleration as vmax/4 (if not set manually)
+	var effective_accel = aceleracion if aceleracion > 0.0 else (max_speed / 4.0)
+	
 	if distance_to_center > CENTER_RADIUS:
 		# Seek toward center with acceleration
 		var seek_dir = to_center.normalized()
 		var desired_velocity = seek_dir * max_speed
-		velocity = velocity.move_toward(desired_velocity, aceleracion * delta)
+		velocity = velocity.move_toward(desired_velocity, effective_accel * delta)
 	else:
 		# Close to center: damp velocity
-		var speed = velocity.length()
-		if speed > 0:
-			var damping_amount = friccion * delta * 1.5  # Slightly stronger damping at center
-			if speed <= damping_amount:
-				velocity = Vector2.ZERO
-			else:
-				velocity -= velocity.normalized() * damping_amount
+		if friccion > 0.0:
+			var speed = velocity.length()
+			if speed > 0:
+				var damping_amount = friccion * delta * 1.5  # Slightly stronger damping at center
+				if speed <= damping_amount:
+					velocity = Vector2.ZERO
+				else:
+					velocity -= velocity.normalized() * damping_amount
 	
 	# Clamp velocity magnitude to max speed
 	if velocity.length() > max_speed:
@@ -185,7 +193,7 @@ func heal(amount: int) -> void:
 func _die() -> void:
 	print("[Player] %s murió" % pelotita_id)
 	died.emit()
-	# TODO: Notificar al modo de juego
+	# Modo de juego maneja la muerte via signal conectado en register_player
 	# TODO: Desactivar controles, reproducir animación de muerte
 
 

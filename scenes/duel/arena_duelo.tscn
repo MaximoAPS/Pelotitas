@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scenes/duel/arena_duelo.gd" id="1_arena"]
 [ext_resource type="PackedScene" uid="uid://dtxrnwvp1x0gp" path="res://scenes/duel/player_prefab.tscn" id="2_player"]
 [ext_resource type="PackedScene" uid="uid://cq8r4wx2bhm5j" path="res://scenes/ui/mobile_hud.tscn" id="3_hud"]
+[ext_resource type="PackedScene" uid="uid://csgx8wm1pv0uo" path="res://scenes/ui/results_screen.tscn" id="4_results"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_horizontal"]
 size = Vector2(1920, 20)
@@ -92,3 +93,5 @@ color = Color(0.6, 0.2, 0.2, 1)
 position = Vector2(960, 540)
 
 [node name="MobileHUD" parent="." instance=ExtResource("3_hud")]
+
+[node name="ResultsScreen" parent="." instance=ExtResource("4_results")]

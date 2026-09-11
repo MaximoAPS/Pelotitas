@@ -12,7 +12,269 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 
 ---
 
-## Decisiones de Diseño Bloqueadas
+## ✅ Decisiones Cerradas
+
+Estas decisiones están **bloqueadas** y no deben cambiarse sin aprobación explícita del usuario.
+
+### Confirmación de Decisiones Core
+
+Las siguientes decisiones están **firmemente locked** para MVP:
+- ✅ **XP se gana por victorias** (fuente primaria)
+- ✅ **Level cap inicial: 10** (Tier 1), luego +10 por tier con expansiones de contenido
+- ✅ **Roster gratuito: 3 pelotitas** máximo en MVP
+
+### Género y Mecánica Core
+
+- **Género**: Batallas de pelotitas elementales (Fuego, Agua, Tierra, Aire/Viento)
+- **Habilidades spawnen pelotitas coloreadas** según elemento
+- **Tipos de habilidades**:
+  - Disparos simples hacia adelante
+  - Invocaciones (summons) que atacan automáticamente
+  - Muros para cobertura y defensa
+
+### Vista y Plataforma
+
+- **Vista**: 2D top-down estilizado
+  - Física completamente 2D
+  - Esferas renderizadas con sombreado pseudo-3D (apariencia volumétrica)
+  - Orientación landscape (horizontal)
+- **Plataforma primaria**: Android móvil
+- **Plataforma secundaria**: PC standalone para testing (editor embebido come input)
+
+### Multijugador MVP
+
+- **Red**: ENet host/join en misma WiFi local
+- **NO cuentas de usuario** en MVP
+- **Nickname local** solamente
+- **Servidor autoritativo** para combate y física
+
+### Modos de Juego
+
+- **Arquitectura modular**: Modos plug-in con núcleo de combate compartido
+- **Primer modo MVP**: **Duelo por Vida** (1v1)
+  - Victoria: reducir HP enemigo a 0
+  - Mapa: "Arena de Pilares" (locked)
+- Futuros modos fáciles de agregar (CTF, King of the Hill, etc.)
+
+### Mapa MVP (Locked)
+
+**Primer mapa**: "Arena de Pilares"
+- Arena rectangular 1920×1080 con paredes perimetrales
+- **4-6 obstáculos fijos** (pilares/bloqueadores) distribuidos simétricamente
+- **Obstáculos bloquean**: jugadores Y proyectiles (cover efectivo)
+- **Obstáculos son indestructibles** (no pueden ser destruidos)
+- **Colisión jugador-obstáculo**: daña (misma fórmula que paredes: velocidad × masa)
+- **Proyectil en obstáculo**: explota (VFX elemental) y desaparece, sin daño AoE
+- Propósito: cover táctico y líneas de sight interesantes
+
+### Sistema de Cooldowns (Locked)
+
+- **Solo cooldowns fijos** por habilidad (NO hay mana/energía)
+- **Disparo básico**: 1.0s cooldown (provisional, tunable)
+- Habilidades avanzadas: cooldowns más largos (TBD exactos)
+
+### Controles Móviles
+
+**Layout definitivo** (twin-stick-ish):
+- **Palanca virtual** (izquierda inferior): movimiento 360° con deadzone
+- **3 botones de habilidades usables** (derecha inferior): press-hold-drag-release para apuntar
+- **Habilidad pasiva**: sin botón, siempre activa automáticamente (diferida)
+- **HUD superior**: barra de vida
+
+⚠️ **Este layout es definitivo** y no debe cambiarse sin aprobación del usuario.
+
+### Stats de Jugador
+
+Cada pelotita tiene **4 stats principales**:
+- **Ataque** (`ataque`): daño infligido
+- **Defensa** (`defensa`): reducción de daño recibido
+- **Velocidad** (`velocidad`): multiplicador de velocidad de movimiento
+- **Masa** (`masa`): peso en colisiones elásticas
+  - ✅ **Locked MVP**: Masa = 1.0 fija (sin random, sin scaling)
+  - Futuro: pasivas pueden modificar masa temporalmente
+
+**Fórmula de daño**:
+```
+Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
+```
+
+### Sistema de Velocidad
+
+- **Relativo a la media geométrica** de velocidades de participantes
+- **SPD = 1.0** (cuando velocidad stat = media geométrica) equivale a **1.0 m/s virtual**
+- **Conversión**: `speed_px_s = speed_m_s × 200` (PIXELS_PER_METER = 200)
+- **Aceleración**: fracción de `vmax` (inercia con aceleración ~900 px/s²)
+- **Fricción**: desaceleración gradual (~700 px/s²) cuando no hay input
+
+### Progresión y Level-Up
+
+**Curva de XP** (Locked):
+- **Fórmula exponencial**: `round(100 × 1.5^(n-1))`
+  - Nivel 1: 100 XP, Nivel 2: 150 XP, Nivel 3: 225 XP, Nivel 4: 338 XP
+  - Nivel 10: 3849 XP (total acumulado: 11347 XP)
+- **Derrota**: 0 XP en MVP
+
+**XP por Victoria** (Locked - provisional, sujeto a balance):
+- **Fórmula**: Basada en diferencia de niveles
+  ```
+  diff = opponent_level - your_level
+  if diff >= 0: xp = min(25 + 5*diff, 65)  # Cap en +40 bonus
+  if diff < 0: xp = max(5, 25 + 5*diff)   # Mínimo 5 XP
+  ```
+- **Base**: 25 XP (mismo nivel)
+- **Bonus**: +5 XP por cada nivel que el oponente esté arriba (cap en 65 XP)
+- **Penalización**: -5 XP por cada nivel que el oponente esté abajo (mínimo 5 XP)
+- **Estimación**: ~400-450 victorias para nivel 10 con matchmaking balanceado
+
+**Level Cap**:
+- **Tier 1 (MVP)**: nivel 0-10
+- **Expansiones futuras**: +10 niveles por tier (20, 30, 40, etc.) con nuevo contenido
+- XP ganada al alcanzar cap se guarda para el próximo tier
+
+**Al subir de nivel, se otorgan**:
+1. **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed
+   - Distribución aleatoria (enteros no negativos que suman exactamente 10)
+2. **+1 punto de habilidad elemental** según **afinidad secreta** (estilo DinoRPG)
+   - Cada pelotita tiene pesos elementales permanentes generados al crearla (ej: Fuego 40%, Agua 20%, Tierra 10%, Aire 30%)
+   - Pesos son **secretos** y nunca se muestran al jugador
+   - El elemento del punto otorgado se determina por sorteo aleatorio según estos pesos
+
+### Loadout
+
+- **3 habilidades usables** (activables con botones)
+- **1 habilidad pasiva** (efecto automático permanente)
+
+### Roster de Pelotitas
+
+- **MVP**: **3 pelotitas gratis** (máximo)
+- **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
+
+**Selección antes de duelo** (Locked):
+- Antes de iniciar un duelo, jugador **selecciona 1 pelotita** de su roster
+- Pantalla de selección muestra: nombre, color, nivel, stats, récord (victorias/derrotas)
+- La pelotita seleccionada determina: stats del match, habilidades disponibles, XP ganada
+
+**Borrado de pelotita** (Locked):
+- Cuando roster lleno (3/3), jugador puede **borrar** una pelotita para liberar espacio
+- **Doble confirmación requerida**: Modal + input manual del nombre
+- **Sin undo en MVP**: Borrado es permanente (archivo eliminado del disco)
+
+### Creación de Pelotita (Locked)
+
+**Flujo de creación**:
+- Jugador ingresa **solo el nombre** (3-16 caracteres)
+- Sistema genera automáticamente:
+  - Stats: 50/50/50 base + roll aleatorio +10 entre ATK/DEF/SPD
+  - Afinidades secretas (4 pesos elementales, suma = 1.0)
+  - Color visual derivado del elemento dominante en afinidad
+- **Jugador NO elige**: stats, color, elemento, apariencia
+- **Filosofía**: Descubrir la identidad de la pelotita durante el juego, no elegirla
+
+### Disparo Básico Elemental
+
+Cada elemento tiene un disparo básico con:
+- **Velocidad**: configurada por habilidad (ej: 400 px/s)
+- **Masa**: propiedad del proyectil
+- **Radio**: tamaño de colisión
+- **Daño bruto**: calculado según ATK vs DEF
+- **Al impactar**: 
+  - VFX de explosión (placeholder: círculo coloreado)
+  - Aplicar daño vs DEF enemigo
+  - Knockback proporcional a masa × velocidad (~150 px/s inicial)
+  - Proyectil desaparece (despawn)
+
+### Física y Colisiones
+
+**Entre jugadores (pelotita vs pelotita)**:
+- Colisiones elásticas perfectas (conservación de momento y energía)
+- **NO causan daño** por sí mismas
+- Masa determina quién empuja más
+
+**Con paredes**:
+- **SÍ causan daño** basado en velocidad de impacto
+- Fórmula: `wall_damage = (impact_speed - 100.0) × 0.02 × masa`
+- Umbral mínimo: 100 px/s
+
+**Futuro: Antimatter entre proyectiles rivales**
+- Colisión entre proyectiles enemigos cancela masas (ver sección de visión a largo plazo)
+
+### Dummy para Testing
+
+- **Player 2 dummy**: estacionario con trayectoria que busca centro (aceleración más débil que Player 1)
+- NO persigue al jugador activo
+- Solo sirve como target de prueba
+
+### Flujo de la Aplicación
+
+```
+Boot → Menú Principal → Duelo → Resultado (Otra vez / Menú)
+```
+
+- **NO auto-start** en duelo
+- Usuario siempre elige desde menú
+
+### Orden de Desarrollo
+
+1. **Core hasta que matches multiplayer funcionen**
+2. Definir valores de stats y niveles
+3. Implementar habilidades elementales concretas
+4. UI beta touch-friendly
+5. Balance, modos adicionales, y escalabilidad
+
+---
+
+## ❓ Pendientes de Definir
+
+Estas son **preguntas abiertas** que aún no tienen respuesta definitiva. **NO inventar respuestas**.
+
+### Distribución de Puntos de Stats
+
+- ¿Los 10 puntos de stats pueden asignarse todos a un solo stat, o hay mínimos/máximos por stat?
+
+### Stats Iniciales
+
+- ¿Valores iniciales de ATK/DEF/Speed/masa en nivel 1?
+
+### Sistema de XP y Progresión
+
+- ¿La curva exponencial 1.5x se siente adecuada en playtesting?
+- ¿Los valores de XP (base 25, ±5 por diff, cap 5-65) necesitan ajustes?
+- ¿La fórmula incentiva correctamente enfrentar oponentes más fuertes?
+- ¿Considerar XP por derrota post-MVP para mejorar retención?
+
+### Flujo de Creación
+
+- ¿Cómo es el flujo exacto de creación de pelotita? (UI, pasos, confirmación)
+
+### Moneda Soft
+
+- ¿Habrá moneda soft (coins, gems, etc.) o no?
+
+### Configuración de Mapa
+
+- ¿Tamaño de mapa para duelo?
+- ¿Obstáculos en el mapa?
+
+### Sistema de Recursos
+
+- ¿Cooldowns por defecto para habilidades?
+- ¿Sistema de mana/energía o solo cooldowns?
+
+### Reglas de Multijugador
+
+- ¿Qué pasa si un jugador se desconecta?
+- ¿Hay opción de rejoin/reconnect?
+
+### Mecánica de "Explotar"
+
+- ¿La explosión de proyectiles tiene área de efecto (AoE)?
+- ¿O es solo daño directo single-target + VFX?
+
+---
+
+## Detalle Técnico: Decisiones de Diseño Bloqueadas
+
+Esta sección expande las decisiones cerradas con detalles de implementación.
 
 ### 1. Género y Temática
 
@@ -44,6 +306,50 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 - **Servidor autoritativo** para combate y física
 - **Path local/bots** para testing e iteración sin oponente remoto
 - Optimización de red para WiFi/4G/5G móvil
+
+#### MVP Networking (Implementado)
+
+**Alcance del MVP de red:**
+- **Sin backend ni cuentas**: Solo host/join directo por IP en misma WiFi
+- **ENet peer-to-peer**: Un jugador hostea, otro se une por IP
+- **Nickname local**: Almacenado en `user://user_prefs.cfg` (ConfigFile), sin login
+- **Sincronización básica**: Posiciones de jugadores y proyectiles via MultiplayerSynchronizer y RPCs
+
+**Flujo de conexión:**
+1. **Host crea servidor**:
+   - Botón "Crear Servidor" en menú principal
+   - Servidor ENet en puerto 7777 (configurable)
+   - Muestra IP local (ej: 192.168.1.100) para que otros jugadores se conecten
+   - Espera a que se una 1 cliente (mínimo 2 jugadores para duelo)
+   - Botón "Iniciar Duelo" se habilita cuando hay suficientes jugadores
+   
+2. **Cliente se une**:
+   - Botón "Unirse a Partida" → diálogo con inputs:
+     - Nickname (cargado desde preferencias locales)
+     - IP del servidor (default: 127.0.0.1)
+     - Puerto (default: 7777)
+   - Al conectar exitosamente, envía nickname al servidor via RPC
+   - Automáticamente entra a la arena cuando el host inicia duelo
+
+3. **En duelo**:
+   - Servidor tiene autoridad sobre jugadores y proyectiles
+   - Posiciones de jugadores sincronizadas con MultiplayerSynchronizer
+   - Proyectiles spawneados via RPC (`_spawn_projectile_networked`)
+   - Solo el authority (dueño) del jugador procesa input y física de ese jugador
+
+**Limitaciones del MVP:**
+- Solo WiFi local (misma red)
+- Sin matchmaking ni lobby público
+- Máximo 2 jugadores (1v1)
+- Sin reconexión automática
+- Sin NAT traversal (no funciona entre redes diferentes)
+- Sin persistencia de partidas (si se desconecta, se pierde el duelo)
+
+**Para Android WiFi testing:**
+- Ambos dispositivos deben estar en la misma red WiFi
+- Host necesita saber su IP local (mostrada en el diálogo)
+- Cliente ingresa la IP del host manualmente
+- Permisos requeridos: `INTERNET`, `ACCESS_NETWORK_STATE`
 
 **Controles táctiles (Android-optimized) - Layout y mecánicas bloqueadas**:
 
@@ -96,7 +402,7 @@ Sistema **press-and-hold-drag-release** para apuntado preciso:
 
 **HUD superior**: 
 - Barra de vida
-- Cooldowns visuales en botones (futuro: overlay circular)
+- **Cooldowns visuales**: Radial/overlay circular progress en botones (✅ locked - ver GDD §17)
 
 **Feedback**: 
 - Visual al presionar y durante drag
@@ -117,7 +423,7 @@ Sistema **press-and-hold-drag-release** para apuntado preciso:
 
 **Primer modo shippable**: **Duelo por Vida** (1v1)
 - Gana el primero en reducir la vida del rival a 0
-- Mapa: arena simple
+- Mapa: "Arena de Pilares" con 4-6 obstáculos fijos
 
 **Futuros modos fáciles de agregar** (solo requieren nueva clase de `Mode`):
 - Captura la Bandera
@@ -153,7 +459,15 @@ Pelotita "Chispa":
   Level up 3: tira 15% → Agua (+1 punto Agua)
 ```
 
-### 10. Loadout por Duelo
+**Distribución de puntos de stats**:
+
+Al subir de nivel, se otorgan **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed:
+- Son enteros no negativos que suman exactamente 10
+- Distribución es aleatoria (cada stat puede recibir entre 0 y 10 puntos en un level-up)
+
+⚠️ **Pendiente de definir**: ¿Hay mínimos/máximos por stat? (ver sección "Pendientes de Definir")
+
+### 6. Loadout por Duelo
 
 Cada pelotita equipa **3 habilidades usables + 1 pasiva** antes de entrar al duelo.
 
@@ -200,12 +514,14 @@ Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
 
 La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match, con física de **inercia** para movimiento fluido.
 
-**Sistema de inercia**:
+**Sistema de inercia** (✅ locked):
 - El input del jugador define una **dirección deseada**, no velocidad instantánea
-- La pelotita **acelera** hacia la dirección deseada (tuneable: `aceleracion` ≈ 900 px/s²)
-- Sin input, se aplica **fricción** que desacelera gradualmente (tuneable: `friccion` ≈ 700 px/s²)
+- La pelotita **acelera** hacia la dirección deseada: **aceleracion = vmax / 4** (≈4s de 0 a max speed)
+- **Sin fricción**: Al soltar stick, pelotita continúa con velocidad actual (coast con inercia indefinidamente)
 - La velocidad se clampea a la **velocidad máxima** calculada del stat (`speed_m_s × PIXELS_PER_METER`)
-- Resultado: movimiento con peso e inercia, no detención/arranque instantáneos
+- Resultado: movimiento con peso e inercia, coasting espacial/ice-like
+- **Tunable**: Si aceleración sluggish, reducir factor (ej: vmax/3 = 3s, vmax/2 = 2s)
+- **Futuro**: Si coasting muy difícil, agregar fricción muy baja (ej: vmax/20 o menor)
 
 **Fórmula**:
 
@@ -438,6 +754,142 @@ func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
 - **`Projectile`** almacena referencias a `source_ability` y `source_player` para invocar `on_hit_enemy`
 - **`Player`** detecta colisiones en `_physics_process()` y llama a los triggers del loadout
 - Las habilidades **no necesitan implementar todos los triggers**, solo los relevantes (implementación por defecto vacía en `Ability`)
+
+---
+
+## Roadmap de Implementación
+
+### Orden de Prioridad (Bloqueado)
+
+**1. Core (EN PROGRESO)**
+- Pulir flujo básico hasta poder jugar múltiples partidas multiplayer seguidas
+- Estado actual: Flow local funciona (boot → menu → duel → results → restart)
+- Pendiente: Red/multiplayer estable, reconexión, múltiples rondas sin bugs
+
+**2. Stats y Nivel (PRE-habilidades)**
+- Definir cómo ATK/DEF/Speed/Masa se modifican al subir de nivel
+- Sistema de progresión: XP → Level up → puntos de stat
+- Fórmulas de crecimiento de stats por nivel
+- **Bloquea habilidades**: las habilidades usarán estos stats, no al revés
+
+**3. Habilidades**
+- Implementar skill tree elemental con dependencias
+- Habilidades usan stats ya definidos (ATK escala daño, etc.)
+- Triggers y mecánicas complejas
+
+**4. UI de Beta**
+- HUD elaborado, animaciones, feedback visual rico
+- Menús de loadout y skill tree
+- Polish visual para primera beta pública
+
+**5. Balance y Modos Adicionales**
+- Ajustar stats, habilidades, tiempos
+- Captura la Bandera, Team Deathmatch, etc.
+- Escalar contenido
+
+⚠️ **NO implementar habilidades antes de definir sistema de stats/nivel**. Las habilidades dependen de stats finales.
+
+---
+
+## Flujo de App v0.1
+
+### Secuencia de Pantallas
+
+El flujo básico de la aplicación para la versión 0.1 local:
+
+```
+Boot (1s splash)
+    ↓
+Main Menu
+    ├─→ Prueba Local → Arena Duelo → Results Screen
+    │                      ↓              ├─→ Otra vez (restart arena)
+    │                   (combate)         └─→ Menú principal
+    ├─→ Crear Servidor (stub, no implementado)
+    ├─→ Unirse a Partida (stub, no implementado)
+    └─→ Salir (cierra app)
+```
+
+### Descripción de Pantallas
+
+**1. Boot (`scenes/boot/boot.tscn`)**
+- Splash screen de 1 segundo
+- Carga recursos globales y autoloads
+- Transiciona automáticamente al menú principal
+- **NO auto-start** al arena (debug mode removido)
+
+**2. Main Menu (`scenes/menus/main_menu.tscn`)**
+- Título: "PELOTITAS" + subtítulo "v0.1 local"
+- Botones:
+  - **Prueba Local**: Inicia duelo 1v1 local (player vs dummy)
+  - **Crear Servidor**: Stub para networking futuro
+  - **Unirse a Partida**: Stub para networking futuro
+  - **Salir**: Cierra la aplicación
+- Layout centrado, botones grandes y mobile-friendly
+- Sin auto-start timer que salte al arena
+
+**3. Arena Duelo (`scenes/duel/arena_duelo.tscn`)**
+- Duelo 1v1: Player controlable vs Dummy estacionario
+- Player 1 (azul): Controlado por joystick/teclado
+- Player 2 (rojo/naranja): Dummy que NO se mueve, solo recibe daño
+- Física de colisiones y habilidades activas
+- HUD móvil con controles táctiles
+- **Victory detection**: Cuando un jugador muere (HP = 0), se llama `Game.end_duel()`
+
+**4. Results Screen (`scenes/ui/results_screen.tscn`)**
+- Overlay CanvasLayer sobre la arena
+- Muestra resultado:
+  - **"¡GANASTE!"** si el jugador local ganó
+  - **"PERDISTE"** si el jugador local perdió
+  - **"¡EMPATE!"** si ambos murieron simultáneamente
+- Botones:
+  - **Otra vez**: Reinicia el duelo (recarga arena con nuevo modo)
+  - **Menú principal**: Vuelve al menú principal
+- Aparece automáticamente cuando `Game.duel_ended` signal se emite
+
+### Flujo Técnico
+
+**Inicio de Duelo (Prueba Local)**:
+1. Usuario presiona "Prueba Local" en menú
+2. `MainMenu._on_local_test_pressed()` crea instancia de `DueloPorVida`
+3. Llama `Game.start_duel(mode)` (cambia estado a `IN_DUEL`)
+4. Cambia escena a `arena_duelo.tscn`
+
+**Durante Duelo**:
+1. `ArenaDuelo._ready()` spawns jugadores y registra en modo
+2. `Mode.register_player()` conecta signal `player.died` a `_on_player_died`
+3. Jugadores combaten usando habilidades y movimiento
+4. `Mode.process(delta)` actualiza lógica del modo cada frame
+
+**Fin de Duelo**:
+1. Jugador muere → `Player.take_damage()` detecta `current_health <= 0`
+2. `Player._die()` emite signal `died`
+3. `Mode._on_player_died()` → `DueloPorVida.on_player_death()`
+4. `DueloPorVida.check_victory_conditions()` verifica jugadores vivos
+5. `DueloPorVida._declare_victory(winner_id)` → `Game.end_duel(winner_id)`
+6. `Game.end_duel()` emite signal `duel_ended` y cambia estado a `POST_DUEL`
+7. `ArenaDuelo._on_duel_ended()` llama `results_screen.show_results(winner_id)`
+8. Results screen overlay aparece con botones de reinicio o menú
+
+**Restart o Return**:
+- **Otra vez**: `ResultsScreen._on_restart_pressed()` recrea modo y recarga escena actual
+- **Menú principal**: `ResultsScreen._on_main_menu_pressed()` cambia estado a `MAIN_MENU` y carga `main_menu.tscn`
+
+### Decisiones de Diseño
+
+**¿Por qué no auto-start al arena?**
+- Testing y debugging requieren acceso al menú
+- Usuario debe elegir explícitamente el modo de juego
+- Facilita testing de networking cuando se implemente
+
+**¿Por qué overlay en lugar de cambio de escena?**
+- Permite ver el estado final del duelo (posiciones, HP)
+- Más rápido que recargar toda la escena
+- Mejor UX para mobile (sin flash de carga)
+
+**¿Por qué reload_current_scene() para restart?**
+- Limpia todo el estado del duelo anterior
+- Garantiza spawn fresco de jugadores y proyectiles
+- Evita bugs de estado persistente
 
 ---
 
@@ -802,11 +1254,15 @@ Cada elemento tiene un **disparo básico** que funciona con la misma mecánica:
 ## TODOs Críticos para Gameplay Completo
 
 ### Red y Multiplayer
-- [ ] Implementar MultiplayerSynchronizer en Player
-- [ ] Lobby para esperar jugadores
-- [ ] Sincronizar spawn de proyectiles
-- [ ] Manejo de latencia y desconexiones (crítico en mobile)
+- [x] Implementar MultiplayerSynchronizer en Player
+- [x] Sincronizar spawn de proyectiles (via RPC)
+- [x] Host/Join por IP con nickname local
+- [x] Mostrar IP local del servidor
+- [ ] Lobby mejorado con lista de jugadores conectados
+- [ ] Manejo robusto de latencia y desconexiones (crítico en mobile)
 - [ ] Optimización de ancho de banda para redes móviles
+- [ ] NAT traversal / relay server para jugar entre redes diferentes
+- [ ] Reconexión automática en desconexiones temporales
 
 ### Android-Specific
 - [ ] **Testing en dispositivos Android reales** (gama media: Samsung Galaxy A, Xiaomi Redmi)
@@ -906,13 +1362,14 @@ Para desarrollo en PC/Mac sin touch:
 
 Para pruebas sin multiplayer, el juego spawna:
 - **Player 1**: Controlable con teclado/touch (azul)
-- **Player 2**: Dummy estacionario que NO se mueve ni persigue (rojo/naranja)
+- **Player 2**: Dummy con trayectoria que busca el centro del mapa (rojo/naranja)
+  - Aceleración más débil que Player 1
   - Puede recibir daño de proyectiles
   - Participa en colisiones elásticas (puede ser empujado)
   - Recibe daño de paredes si es empujado contra ellas
-  - **NO tiene lógica de AI** - solo es un target de prueba
+  - **NO persigue al jugador** - solo se mueve hacia el centro
 
-Este enfoque permite testear física y habilidades sin implementar oponente inteligente.
+Este enfoque permite testear física y habilidades sin implementar oponente inteligente completo.
 
 ## Notas Finales
 

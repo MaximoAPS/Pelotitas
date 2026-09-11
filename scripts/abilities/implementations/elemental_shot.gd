@@ -19,35 +19,35 @@ func execute(caster: Player, aim_direction: Vector2) -> void:
 	if not caster:
 		return
 	
-	# Spawn del proyectil elemental
-	var projectile = PROJECTILE_SCENE.instantiate()
+	# Solo el authority spawnea proyectiles
+	if not Net.has_authority(caster):
+		return
 	
-	# Configurar el proyectil
-	if projectile is Projectile:
-		projectile.speed = projectile_speed
-		projectile.lifetime = projectile_lifetime
-		
-		# Color según elemento
-		_apply_element_color(projectile)
-		
-		# Posición inicial: delante del caster
-		var spawn_offset = aim_direction.normalized() * 32.0
-		projectile.global_position = caster.global_position + spawn_offset
-		
-		# Inicializar con stats del caster y referencia a esta habilidad
-		projectile.initialize(
-			projectile.global_position,
+	# Obtener la arena para spawning
+	var arena = caster.get_tree().root.get_node_or_null("ArenaDuelo")
+	if not arena:
+		push_error("[ElementalShot] No se encontró ArenaDuelo en la escena")
+		return
+	
+	# Calcular datos del proyectil
+	var spawn_offset = aim_direction.normalized() * 32.0
+	var spawn_pos = caster.global_position + spawn_offset
+	
+	# Si somos el servidor o hay conexión de red, usar RPC para replicar
+	if multiplayer.has_multiplayer_peer():
+		arena._spawn_projectile_networked.rpc(
+			spawn_pos,
 			aim_direction,
 			caster.get_multiplayer_authority(),
 			caster.ataque,
-			self,  # source_ability
-			caster  # source_player
+			projectile_speed,
+			projectile_lifetime,
+			projectile_color,
+			caster.pelotita_id
 		)
-		
-		# Agregar a la escena
-		caster.get_parent().add_child(projectile)
-		
-		print("[ElementalShot] %s disparó %s hacia %v" % [caster.pelotita_id, ability_name, aim_direction])
+	else:
+		# Modo local sin red
+		_spawn_local_projectile(arena, spawn_pos, aim_direction, caster)
 
 
 func _apply_element_color(projectile: Node2D) -> void:
@@ -55,3 +55,27 @@ func _apply_element_color(projectile: Node2D) -> void:
 	var sprite = projectile.get_node_or_null("Sprite2D")
 	if sprite:
 		sprite.modulate = projectile_color
+
+
+## Helper local para spawning sin red
+func _spawn_local_projectile(arena: Node, spawn_pos: Vector2, aim_direction: Vector2, caster: Player) -> void:
+	var projectile = PROJECTILE_SCENE.instantiate()
+	
+	if projectile is Projectile:
+		projectile.speed = projectile_speed
+		projectile.lifetime = projectile_lifetime
+		
+		_apply_element_color(projectile)
+		
+		projectile.initialize(
+			spawn_pos,
+			aim_direction,
+			caster.get_multiplayer_authority(),
+			caster.ataque,
+			self,
+			caster
+		)
+		
+		arena.spawn_projectile(projectile)
+		
+		print("[ElementalShot] %s disparó %s hacia %v" % [caster.pelotita_id, ability_name, aim_direction])
