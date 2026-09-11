@@ -24,7 +24,7 @@ func on_match_start() -> void:
 
 func check_victory_conditions() -> void:
 	# Contar jugadores vivos
-	var alive_players: Array[Player] = []
+	var alive_players: Array = []  # Array of Player instances
 	
 	for player in active_players:
 		if player.current_health > 0:
