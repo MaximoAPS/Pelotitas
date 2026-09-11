@@ -1406,21 +1406,31 @@ graph TD
     B --> C{¿Tiene pelotitas?}
     C -->|No| D[Crear Pelotita]
     D --> B
-    C -->|Sí| E[Seleccionar Pelotita]
-    E --> F[Equipar Loadout]
-    F --> G{¿Host o Join?}
-    G -->|Host| H[Hostear Duelo]
-    G -->|Join| I[Ingresar IP]
-    H --> J[Lobby Esperando]
-    I --> J
-    J --> K{Ambos Ready?}
-    K -->|No| J
-    K -->|Sí| L[DUELO]
-    L --> M[Pantalla Resultado]
-    M --> N{¿Qué hacer?}
-    N -->|Otra vez| L
-    N -->|Menú| B
+    C -->|Sí| E{¿Jugar Duelo?}
+    E -->|Sí| F[**Seleccionar Pelotita**]
+    E -->|Equipar| G[Equipar Loadout]
+    E -->|Ver Roster| H[Ver Pelotitas]
+    F --> I{¿Host o Join?}
+    G --> B
+    H --> B
+    I -->|Host| J[Hostear Duelo]
+    I -->|Join| K[Ingresar IP]
+    J --> L[Lobby Esperando]
+    K --> L
+    L --> M{Ambos Ready?}
+    M -->|No| L
+    M -->|Sí| N[DUELO]
+    N --> O[Pantalla Resultado]
+    O --> P{¿Qué hacer?}
+    P -->|Otra vez| F
+    P -->|Menú| B
 ```
+
+**Nota importante (Locked)**: Antes de iniciar un duelo, el jugador **DEBE seleccionar 1 pelotita** de su roster (máximo 3 disponibles). Esta pelotita determina:
+- Stats base (ATK/DEF/SPD/Masa) para ese match
+- Habilidades desbloqueadas disponibles para equipar
+- Color y apariencia visual en el match
+- Progresión (XP ganada se asigna a esta pelotita específica)
 
 ### 8.2 Pantallas Detalladas
 
@@ -1465,11 +1475,110 @@ graph TD
 ```
 
 **Acciones**:
-- **Jugar Duelo** → Pantalla Host/Join
+- **Jugar Duelo** → **Selección de Pelotita** (obligatorio antes de duelo)
 - **Equipar Habilidades** → Pantalla Loadout
 - **Mis Pelotitas** → Lista de pelotitas, seleccionar otra
 - **Crear Pelotita Nueva** → Diálogo ingreso nickname → crear y seleccionar
 - **Opciones** → Volumen, FPS counter, etc.
+
+---
+
+#### Selección de Pelotita (scenes/menus/pelotita_select.tscn) - **LOCKED**
+
+**Propósito**: Elegir 1 pelotita del roster antes de iniciar un duelo
+
+**Cuándo se muestra**: 
+- Inmediatamente después de presionar "Jugar Duelo" en Menú Principal
+- Antes de Host/Join screen
+
+**Elementos UI**:
+```
+┌─────────────────────────────────────────────┐
+│     Selecciona tu Pelotita                  │
+├─────────────────────────────────────────────┤
+│                                             │
+│  ┌──────────────┐ ┌──────────────┐ ┌─────┐│
+│  │   "Chispa"   │ │   "Rayo"     │ │  +  ││
+│  │  🔴 Rojizo   │ │  💙 Azul     │ │     ││
+│  │  Nivel 12    │ │  Nivel 8     │ │Nueva││
+│  │              │ │              │ │     ││
+│  │ ATK 72       │ │ ATK 65       │ │     ││
+│  │ DEF 58       │ │ DEF 70       │ │     ││
+│  │ SPD 66       │ │ SPD 61       │ │     ││
+│  │              │ │              │ │     ││
+│  │ 15V / 8D     │ │ 10V / 5D     │ │     ││
+│  │ [Seleccionar]│ │ [Seleccionar]│ │     ││
+│  └──────────────┘ └──────────────┘ └─────┘│
+│                                             │
+│  [← Volver]                                 │
+└─────────────────────────────────────────────┘
+```
+
+**Interacción** (Locked):
+1. Mostrar todas las pelotitas del roster (máx 3 en MVP)
+2. Cada card muestra:
+   - Nickname
+   - Color visual (indicador de elemento dominante)
+   - Nivel actual
+   - Stats (ATK/DEF/SPD)
+   - Récord (Victorias / Derrotas)
+   - Botón `[Seleccionar]`
+3. Jugador toca/clickea `[Seleccionar]` en una pelotita
+4. Sistema guarda `selected_pelotita_uuid` en `Game` singleton
+5. Transición a **Host/Join screen**
+6. Botón `[← Volver]` regresa a Menú Principal sin seleccionar
+
+**Si roster vacío** (primera vez):
+- Redirigir automáticamente a "Crear Pelotita"
+- Después de crear, auto-seleccionar esa pelotita y continuar a Host/Join
+
+**Implementación**:
+```gdscript
+# scripts/menus/pelotita_select.gd
+extends Control
+
+func _ready():
+    var pelotitas = Progression.list_all_pelotitas()
+    
+    if pelotitas.is_empty():
+        # Primera vez: forzar creación
+        get_tree().change_scene_to_file("res://scenes/menus/create_pelotita.tscn")
+        return
+    
+    _populate_cards(pelotitas)
+
+func _on_pelotita_selected(uuid: String):
+    Game.selected_pelotita_uuid = uuid
+    var pelotita = Progression.load_pelotita(uuid)
+    print("Pelotita seleccionada: %s (Level %d)" % [pelotita.nickname, pelotita.nivel])
+    
+    # Continuar a Host/Join
+    get_tree().change_scene_to_file("res://scenes/menus/host_or_join.tscn")
+
+func _on_back_pressed():
+    get_tree().change_scene_to_file("res://scenes/menus/main_menu.tscn")
+```
+
+**Datos persistidos**:
+```gdscript
+# scripts/core/game.gd (Autoload)
+extends Node
+
+var selected_pelotita_uuid: String = ""  # UUID de pelotita activa para próximo match
+
+func get_selected_pelotita() -> PelotitaData:
+    if selected_pelotita_uuid.is_empty():
+        push_error("No pelotita seleccionada")
+        return null
+    return Progression.load_pelotita(selected_pelotita_uuid)
+```
+
+**Notas de diseño**:
+- ✅ **Locked**: Selección obligatoria antes de cada duelo
+- 🎯 **Por qué**: Permite tener múltiples pelotitas y elegir cuál usar para cada match
+- 📊 **Stats mostradas**: Ayuda al jugador a recordar cuál está más nivelada o tiene mejor récord
+- 🔄 **Cambio frecuente**: Jugador puede probar diferentes pelotitas en diferentes matches
+- 💾 **Persistencia**: `Game.selected_pelotita_uuid` se mantiene entre screens hasta inicio del match
 
 ---
 
