@@ -19,12 +19,35 @@ Las siguientes decisiones de diseño han sido **cerradas y locked** en esta vers
 - ✅ **HP igual al timeout**: **Empate** (sin ganador, no hay desempate adicional)
 - ✅ Victoria por eliminación sigue funcionando (HP rival a 0)
 
-**Implementación**:
+**Timer UI** (✅ locked):
+- ✅ **Posición**: Top-center (centro superior de la pantalla)
+- ✅ **Visibilidad**: Solo visible cuando el tiempo restante ≤ 30 segundos
+- ✅ **Razón**: Evitar distracción visual constante, crear urgencia en final de match
+- ⚠️ **Formato**: TBD (ej: "0:28", "28s", etc.) - provisional, sujeto a UI design
+- ⚠️ **Color**: TBD (ej: blanco → amarillo → rojo según urgencia) - provisional
+
+**Comportamiento del timer**:
 ```gdscript
 const MATCH_DURATION: float = 180.0  # 3 minutos
+const TIMER_UI_THRESHOLD: float = 30.0  # Mostrar UI cuando ≤30s
+
+func _process(delta):
+    match_time_remaining -= delta
+    
+    # UI solo visible en últimos 30 segundos
+    timer_label.visible = match_time_remaining <= TIMER_UI_THRESHOLD
+    
+    if match_time_remaining <= 0.0:
+        handle_timeout_victory()
 ```
 
-**Estado**: ✅ CERRADO - No requiere más discusión
+**Razón de diseño (UI visibility)**:
+- 🎯 **Foco en combate**: Timer constante distrae del gameplay, HP bars son indicador principal
+- ⏰ **Urgencia late-game**: Aparición del timer señala "final de match" (tensión narrativa)
+- 📱 **Mobile screen real estate**: Menos elementos permanentes = HUD más limpio
+- 🎮 **Modern pattern**: Muchos juegos competitivos ocultan timer hasta últimos segundos
+
+**Estado**: ✅ CERRADO - Duración, victoria por timeout, y timer UI locked
 
 ---
 
@@ -2793,7 +2816,7 @@ func get_selected_pelotita() -> PelotitaData:
 ```
 ┌──────────────────────────────────────────────┐
 │ [███ TU: 85/110 ██████████░░] [Rival: 72/100 ███████░░] │
-│                                  Tiempo: 1:23│
+│                   [⏱ 0:28]                   │ ← Timer (solo si ≤30s)
 ├──────────────────────────────────────────────┤
 │                                              │
 │                    ARENA                     │
@@ -2813,7 +2836,10 @@ func get_selected_pelotita() -> PelotitaData:
   - Layout adapta posición/tamaño según cantidad
   - Cada botón: **radial/overlay cooldown progress** + icono elemental (ver §17)
 - Barra de vida (superior)
-- Timer de match (superior derecha - ✅ 3:00 locked)
+- **Timer de match** (✅ locked - ver §1):
+  - Posición: **top-center** (centro superior)
+  - Visible solo cuando tiempo restante **≤ 30 segundos**
+  - Duración total: 3:00 (180s)
 
 ---
 
