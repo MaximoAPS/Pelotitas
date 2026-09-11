@@ -670,13 +670,23 @@ func _process(delta):
    - Provides physical feedback, but should be combined with another option
    - Knockback alone may not be noticed if hit at high velocity
 
-**Recommendation** (to be decided during implementation):
-- **Combination approach**: Use 2-3 effects together for maximum clarity
-  - Example: Flash/blink + knockback (already exists) + floating damage number
-  - Example: Color pulse + screen shake + knockback
-- **Configurable**: Consider Settings option to reduce intensity (accessibility)
+**✅ PROVISIONAL LOCKED FOR MVP**:
+- **Sprite flash/blink + floating damage numbers** (+ knockback which already exists)
+- **Camera shake**: Optional/off for MVP (can be added post-MVP if desired)
 
-**Implementation guideline**:
+**Razón de elección MVP**:
+- Flash/blink: Immediate, highly visible feedback
+- Floating damage numbers: Provides exact information, popular pattern
+- Knockback: Already implemented
+- Camera shake omitted: Can disorient on mobile, avoid for MVP simplicity
+
+**Post-MVP considerations**:
+- Add camera shake as optional setting (accessibility)
+- Different feedback intensity based on damage amount
+- Sound effects (deferred - audio out of MVP scope)
+- Haptic vibration on Android
+
+**Implementation guideline** (✅ provisional locked for MVP):
 ```gdscript
 # In Player.take_damage(amount: int)
 func take_damage(amount: int):
@@ -685,16 +695,29 @@ func take_damage(amount: int):
     # HP bar update (existing)
     emit_signal("hp_changed", hp_current, hp_max)
     
-    # ✅ LOCKED: MUST have additional hit feedback
-    # Choose at least one of these:
-    play_hit_flash()           # Option 1: White/red flash
-    trigger_screen_shake()     # Option 2: Camera shake
-    spawn_damage_number(amount) # Option 3: Floating number
-    apply_color_pulse()        # Option 4: Red tint
+    # ✅ PROVISIONAL LOCKED MVP: Flash + damage numbers
+    play_hit_flash()            # Sprite flash/blink (0.1-0.2s white/red)
+    spawn_damage_number(amount) # Floating number ("-15", floats up, fades)
     # apply_knockback() - already implemented in projectile hit
+    
+    # Camera shake: Optional/off for MVP
+    # trigger_screen_shake() - can add post-MVP
     
     if hp_current <= 0:
         die()
+
+func play_hit_flash():
+    # Flash sprite white or red for brief moment
+    modulate = Color.WHITE  # or Color(1, 0.5, 0.5) for red tint
+    await get_tree().create_timer(0.15).timeout
+    modulate = Color.WHITE  # Return to normal
+    
+func spawn_damage_number(damage: int):
+    var damage_label = Label.new()
+    damage_label.text = "-%d" % damage
+    damage_label.modulate = Color.RED
+    # Position above player, float up with tween, fade out after 1-1.5s
+    # Auto-queue_free() after animation
 ```
 
 **Future considerations** (post-MVP):
@@ -702,7 +725,7 @@ func take_damage(amount: int):
 - Haptic vibration on Android (optional enhancement)
 - Different feedback intensity based on damage amount (heavy hit vs chip damage)
 
-**Estado**: ✅ LOCKED - Hit feedback required, specific style TBD from options list
+**Estado**: ✅ LOCKED - Hit feedback required, **✅ PROVISIONAL MVP: flash/blink + damage numbers, camera shake optional/off**
 
 ---
 
@@ -3977,7 +4000,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
 | 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. (13) Pause solo en local/test, no en multiplayer PvP (fairness competitivo). (14) Forfeit/disconnect = loss para quien abandona/desconecta, opponent wins + recibe win XP (mismo que victoria normal). Disconnect tratado como forfeit en MVP (provisional). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values, disconnect=forfeit. |
-| 0.4 | Sept 11, 2026 | **Nuevas decisiones locked**: (15) **Duel HUD - Both players' HP bars always visible** (player's own prominent, opponent's always shown, competitive clarity standard). (16) **Hit Feedback Effect - Must have visual feedback on damage** (not only HP bar change). Specific VFX style TBD from locked options list: flash/white blink, screen shake light, floating damage numbers, brief color pulse. Knockback already exists. (17) **Post-Duel Flow - Return to lobby/menu, no direct rematch** ("Otra vez" removed, [Continuar] returns to multiplayer lobby/main menu, must re-setup for another match). (18) **Camera System - Frame both players with zoom limits** (dynamic camera adjusts position and zoom to keep both players on-screen, min/max zoom bounds enforced, smooth transitions). **Flow documentation updated** to reflect no-rematch policy. |
+| 0.4 | Sept 11, 2026 | **Nuevas decisiones locked**: (15) **Duel HUD - Both players' HP bars always visible** (player's own prominent, opponent's always shown, competitive clarity standard). (16) **Hit Feedback Effect - Must have visual feedback on damage** (not only HP bar change). **✅ PROVISIONAL MVP: sprite flash/blink + floating damage numbers** (+ knockback already exists). Camera shake optional/off for MVP. (17) **Post-Duel Flow - Return to lobby/menu, no direct rematch** ("Otra vez" removed, [Continuar] returns to multiplayer lobby/main menu, must re-setup for another match). (18) **Camera System - Frame both players with zoom limits** (dynamic camera adjusts position and zoom to keep both players on-screen, min/max zoom bounds enforced, smooth transitions). **Flow documentation updated** to reflect no-rematch policy. Implementation code examples added for hit feedback. |
 
 ---
 
