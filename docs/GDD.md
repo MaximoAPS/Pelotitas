@@ -1260,13 +1260,17 @@ P1/P2 = Spawn points (simétricos)
 - 🧩 **Complejidad espacial**: No es solo "correr en círculos"
 - ⚡ **Skill expression**: Uso de línea de sight, posicionamiento
 
-**Interacción Proyectil vs Obstáculo** (TBD - **Pendiente de definir**):
-- ⚠️ **Opción A**: Proyectiles explotan al impactar obstáculo (desaparecen)
-- ⚠️ **Opción B**: Proyectiles rebotan en obstáculos (ricochet)
-- ⚠️ **Opción C**: Proyectiles pasan a través (obstáculos solo bloquean jugadores)
-- ⚠️ **Opción D**: Depende del tipo de habilidad (algunas atraviesan, otras no)
+**Interacción Proyectil vs Obstáculo** ✅ **LOCKED**:
+- ✅ **Obstáculos bloquean AMBOS**: movimiento de jugadores Y proyectiles
+- ✅ Proyectiles **desaparecen** al impactar obstáculo (no rebotan, no atraviesan)
+- ✅ Cover es **efectivo** - esconderse detrás protege de proyectiles
+- ⚠️ **VFX de impacto aún TBD**: ¿explosión pequeña? ¿chispa? ¿disipación? (decisión visual, no afecta gameplay)
 
-**Decisión requerida**: Elegir A, B, C, o D antes de implementar proyectiles avanzados
+**Implicaciones de diseño**:
+- 🎯 Posicionamiento es crítico: usar obstáculos como cover táctico
+- 🧩 Líneas de sight importan: proyectiles no pasan obstáculos
+- ⚡ Skill expression: flankear, rodear, predecir movimiento rival
+- ⚖️ Balance: movilidad vs cover trade-off
 
 #### Configuración de Paredes
 
@@ -1302,13 +1306,26 @@ StaticBody2D (Obstacle_03):
 # ... más obstáculos según layout final
 ```
 
-**Propiedades**:
+**Propiedades** (Locked):
 - `StaticBody2D` → No se mueven, no tienen física dinámica
 - `collision_layer = 2` (layer "Obstacles")
-- `collision_mask = 1 | 4` (colisiona con Players y Projectiles, si Opción A elegida)
+- `collision_mask = 1 | 4` ✅ **Colisiona con Players (layer 1) Y Projectiles (layer 4)**
 - Sin HP ni daño (no son destructibles en MVP)
 
-**TBD**: Interacción proyectil vs obstáculo (ver opciones A/B/C/D arriba)
+**Comportamiento confirmado**:
+```gdscript
+# Cuando proyectil impacta obstáculo:
+func _on_projectile_collision(body: Node2D):
+    if body.collision_layer == 2:  # Es obstáculo
+        # Proyectil desaparece
+        queue_free()
+        
+        # Spawnear VFX de impacto (TBD cuál VFX exactamente)
+        spawn_impact_vfx(global_position)
+        
+        # NO hay daño al obstáculo
+        # NO hay rebote (ricochet)
+```
 
 #### Posiciones de Spawn (Duelo 1v1)
 
