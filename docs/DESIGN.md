@@ -62,8 +62,16 @@ Las siguientes decisiones están **firmemente locked** para MVP:
 - Arena rectangular 1920×1080 con paredes perimetrales
 - **4-6 obstáculos fijos** (pilares/bloqueadores) distribuidos simétricamente
 - **Obstáculos bloquean**: jugadores Y proyectiles (cover efectivo)
+- **Obstáculos son indestructibles** (no pueden ser destruidos)
+- **Colisión jugador-obstáculo**: daña (misma fórmula que paredes: velocidad × masa)
 - **Proyectil en obstáculo**: explota (VFX elemental) y desaparece, sin daño AoE
 - Propósito: cover táctico y líneas de sight interesantes
+
+### Sistema de Cooldowns (Locked)
+
+- **Solo cooldowns fijos** por habilidad (NO hay mana/energía)
+- **Disparo básico**: 1.0s cooldown (provisional, tunable)
+- Habilidades avanzadas: cooldowns más largos (TBD exactos)
 
 ### Controles Móviles
 

@@ -431,7 +431,7 @@ class_name ElementalShot extends UsableAbility
 @export var projectile_scene: PackedScene  # projectile_elemental.tscn
 @export var projectile_speed: float = 400.0  # px/s
 @export var projectile_lifetime: float = 3.0
-@export var cooldown_time: float = 1.0
+@export var cooldown_time: float = 1.0  # Locked provisional: 1.0s para disparos básicos
 
 func execute(caster: Player, aim_direction: Vector2) -> void:
     var proj = projectile_scene.instantiate()
@@ -716,7 +716,19 @@ WALL_DAMAGE_MULTIPLIER = 0.02
 - Masa=1.0, impacto a 300 px/s → daño = (300-100) × 0.02 × 1.0 = 4 HP
 - Masa=1.5, impacto a 400 px/s → daño = (400-100) × 0.02 × 1.5 = 9 HP
 
-**Táctica**: Empujar al rival contra la pared causa daño adicional.
+**Táctica**: Empujar al rival contra la pared **o contra un obstáculo** causa daño adicional.
+
+#### Daño por Colisión con Obstáculo (Locked)
+
+✅ **Locked**: Obstáculos dañan jugadores usando **la misma fórmula** que paredes:
+
+```
+obstacle_damage = (impact_speed - WALL_DAMAGE_THRESHOLD) × WALL_DAMAGE_MULTIPLIER × masa
+```
+
+**Razón de diseño**: Consistencia. Si impactas algo sólido a alta velocidad, duele igual sea pared u obstáculo.
+
+**Implementación**: Detectar `collision_layer == 2` (Obstacles) en `_physics_process` y aplicar `handle_obstacle_collision()`.
 
 ### 5.3 Sistema de Level-Up (Locked + TBD)
 
@@ -1162,6 +1174,18 @@ func handle_wall_collision(collision: KinematicCollision2D):
     
     # Trigger para habilidades
     loadout.trigger_on_collide_wall(self, collision.get_position(), collision.get_normal())
+
+func handle_obstacle_collision(collision: KinematicCollision2D):
+    # ✅ LOCKED: Obstáculos dañan igual que paredes (misma fórmula)
+    var impact_speed = velocity.length()
+    
+    if impact_speed > WALL_DAMAGE_THRESHOLD:  # Mismo threshold
+        var damage = (impact_speed - WALL_DAMAGE_THRESHOLD) * WALL_DAMAGE_MULTIPLIER * masa
+        take_damage(int(damage))
+        # VFX de impacto (puede ser visualmente distinto de pared)
+    
+    # Obstáculos también pueden triggerear habilidades
+    loadout.trigger_on_collide_wall(self, collision.get_position(), collision.get_normal())
 ```
 
 ### 6.2 Proyectiles
@@ -1315,7 +1339,8 @@ StaticBody2D (Obstacle_03):
 - `StaticBody2D` → No se mueven, no tienen física dinámica
 - `collision_layer = 2` (layer "Obstacles")
 - `collision_mask = 1 | 4` ✅ **Colisiona con Players (layer 1) Y Projectiles (layer 4)**
-- Sin HP ni daño (no son destructibles en MVP)
+- ✅ **Indestructibles** (sin HP, no pueden ser destruidos en MVP)
+- ✅ **Dañan jugadores al colisionar** (misma familia de fórmula que paredes)
 
 **Comportamiento confirmado** (Locked):
 ```gdscript
@@ -2409,11 +2434,12 @@ Estas **ya están decididas**:
 
 | Elemento | Nombre | Tipo | Descripción | Costo |
 |----------|--------|------|-------------|-------|
-| 🔥 Fuego | Disparo de Fuego | Usable | Proyectil recto, daño básico, cooldown 1s | 0 (inicial) |
-| 💧 Agua | Disparo de Agua | Usable | Proyectil recto, daño básico, cooldown 1s | 0 (inicial) |
-| 🌍 Tierra | Disparo de Tierra | Usable | Proyectil recto, daño básico, cooldown 1s | 0 (inicial) |
-| 💨 Aire | Disparo de Aire | Usable | Proyectil recto, daño básico, cooldown 1s | 0 (inicial) |
+| 🔥 Fuego | Disparo de Fuego | Usable | Proyectil recto, daño = ATK, **cooldown 1.0s** (locked provisional) | 0 (inicial) |
+| 💧 Agua | Disparo de Agua | Usable | Proyectil recto, daño = ATK, **cooldown 1.0s** (locked provisional) | 0 (inicial) |
+| 🌍 Tierra | Disparo de Tierra | Usable | Proyectil recto, daño = ATK, **cooldown 1.0s** (locked provisional) | 0 (inicial) |
+| 💨 Aire | Disparo de Aire | Usable | Proyectil recto, daño = ATK, **cooldown 1.0s** (locked provisional) | 0 (inicial) |
 
+**Locked**: Cooldown 1.0s para todos los disparos básicos (provisional, tunable en balance).
 Placeholder: 4 disparos idénticos en mecánica, diferenciados solo por color.
 
 ---
@@ -2612,11 +2638,11 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - 🔮 **Futuro**: Habilidades pasivas podrán modificar masa temporalmente (ej: "+20% masa por 5s")
    - **Impacto**: Simplifica balance de física y colisiones en MVP
 
-8. **Cooldowns y Recursos**
-   - ¿Sistema de mana/energía o solo cooldowns?
-   - Si hay mana: ¿cantidad base? ¿regeneración?
-   - Cooldowns por defecto: ¿1s básicas, 5s intermedias, 15s ultimates?
-   - **Impacto**: Ritmo de combate
+8. **Cooldowns y Recursos** ✅ **LOCKED**
+   - ✅ **Solo cooldowns fijos por habilidad** (NO hay sistema de mana/energía)
+   - ✅ **Disparo básico**: 1.0s cooldown (provisional, sujeto a balance)
+   - ⚠️ **Habilidades avanzadas TBD**: cooldowns intermedios (~3-5s) y ultimates (~10-15s) por definir
+   - **Impacto**: Ritmo de combate simple y directo, sin gestión de recursos
 
 9. **Mapa y Obstáculos** ✅ **COMPLETAMENTE LOCKED**
    - ✅ Tamaño 1920×1080 suficiente para MVP
