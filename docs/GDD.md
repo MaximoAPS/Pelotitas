@@ -123,7 +123,37 @@ hp_current = hp_max
 
 ---
 
-### 6. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 6. Habilidad Inicial Auto-Aprendida ✅ CERRADO
+
+**Mecánica locked**:
+- Al crear pelotita, **auto-learn 1 disparo básico elemental**
+- Elemento = **afinidad dominante** (peso secreto más alto)
+- **Empates**: Si 2+ elementos tienen el mismo peso máximo → elegir aleatoriamente entre empatados
+
+**Ejemplos**:
+- Afinidad `[0.38, 0.12, 0.28, 0.22]` → Fuego dominante (38%) → **Disparo de Fuego**
+- Afinidad `[0.30, 0.30, 0.20, 0.20]` → Fuego/Agua empatados (30%) → sortear → ej. **Disparo de Agua**
+- Afinidad `[0.25, 0.25, 0.25, 0.25]` → Empate 4-way (muy raro) → sortear → cualquier disparo básico
+
+**Implicaciones de diseño**:
+- ⚠️ **Revela parcialmente la afinidad**: El jugador puede inferir que su pelotita tiene alta afinidad al elemento del disparo inicial
+- ✅ **Pista de identidad**: Desde nivel 0, el jugador tiene una pista sobre la tendencia elemental de su pelotita
+- ✅ **Confirmación progresiva**: Level-ups posteriores confirmarán (o sorprenderán) según los puntos elementales ganados
+- 🎨 **Consistencia visual**: Color de pelotita + disparo inicial deben coincidir (ambos del elemento dominante)
+
+**Implementación**:
+```gdscript
+# En Progression.create_new_pelotita()
+var dominant_element = get_dominant_element(affinity)
+var basic_shot_path = get_basic_shot_for_element(dominant_element)
+pelotita.unlocked_ability_ids = [basic_shot_path]  # Solo 1 habilidad inicial
+```
+
+**Estado**: ✅ CERRADO
+
+---
+
+### 7. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -148,6 +178,7 @@ hp_current = hp_max
 
 **Otras preguntas abiertas** (media/baja prioridad):
 - Árbol de habilidades (cuántas por elemento, costos, dependencias)
+- Sistema de loadout (persistente vs pre-match)
 - Lobby timeout y ready check
 
 ---
@@ -432,15 +463,26 @@ class_name PelotitaData extends Resource
    - Agua dominante → tonos azules
    - Tierra dominante → tonos marrones/verdes
    - Aire dominante → tonos blancos/celestes
-   - ⚠️ El jugador NO ve las afinidades, solo el color visual resultante
+   - ⚠️ El jugador NO ve las afinidades numéricas, solo el color visual resultante
 7. Puntos elementales iniciales = 0 (se ganan en level-ups)
-8. Habilidades desbloqueadas: 4 disparos básicos (uno por elemento)
-9. Loadout inicial: 3 disparos básicos equipados + sin pasiva
+8. ✅ **Habilidad inicial auto-aprendida** (LOCKED):
+   - **Auto-learn 1 disparo básico** del **elemento dominante** de afinidad
+   - Dominante = peso de afinidad más alto
+   - Si hay empate (dos o más elementos con mismo peso máximo) → elegir aleatoriamente entre los empatados
+   - Ejemplo: afinidad `[0.38, 0.12, 0.28, 0.22]` → Fuego dominante → auto-learn "Disparo de Fuego"
+   - Ejemplo empate: `[0.30, 0.30, 0.20, 0.20]` → Fuego/Agua empatados → sortear entre ambos
+   - ⚠️ **Esto revela parcialmente la afinidad**: El jugador puede inferir que su pelotita tiene alta afinidad al elemento del disparo inicial
+9. ⚠️ **Loadout inicial** (TBD - pendiente de decisión):
+   - Opción A: Loadout guardado en `PelotitaData` (3 slots usables + 1 pasiva)
+   - Opción B: Loadout elegido pre-match (no persistente, temporal por duelo)
+   - **Impacto**: Afecta arquitectura de datos y UI de equipamiento
+   - **Requiere decisión pronto** para implementar flujo de pre-match
 
 **Resultado**: 
-- Dos pelotitas creadas al mismo tiempo son **diferentes** (stats roll único)
-- El jugador **descubre** la identidad de su pelotita a través del juego (colores, level-ups)
-- UX simple: solo ingresa nombre, el resto es sorpresa controlada
+- Dos pelotitas creadas al mismo tiempo son **diferentes** (stats roll único + posible elemento inicial distinto)
+- El jugador **descubre parcialmente** la identidad de su pelotita desde el inicio (elemento del disparo inicial)
+- El jugador **confirma** la tendencia elemental a través de level-ups posteriores
+- UX simple: solo ingresa nombre, el resto es sorpresa controlada (pero con pista inicial)
 
 **UI mockup**:
 ```
@@ -2443,13 +2485,10 @@ func create_new_pelotita(nickname: String) -> PelotitaData:
     pelotita.tierra_affinity = affinity[2]
     pelotita.aire_affinity = affinity[3]
     
-    # Unlock habilidades básicas
-    pelotita.unlocked_ability_ids = [
-        "res://scripts/abilities/implementations/fire_shot.tres",
-        "res://scripts/abilities/implementations/water_shot.tres",
-        "res://scripts/abilities/implementations/earth_shot.tres",
-        "res://scripts/abilities/implementations/air_shot.tres"
-    ]
+    # ✅ LOCKED: Auto-learn 1 disparo básico del elemento dominante
+    var dominant_element = get_dominant_element(affinity)
+    var basic_shot_path = get_basic_shot_for_element(dominant_element)
+    pelotita.unlocked_ability_ids = [basic_shot_path]
     
     # Metadata
     pelotita.fecha_creacion = Time.get_datetime_string_from_system()
@@ -2520,6 +2559,40 @@ func roll_element_from_affinity(affinity: Array[float]) -> Element:
     if roll < cumulative: return Element.TIERRA
     
     return Element.AIRE
+
+func get_dominant_element(affinity: Array[float]) -> Element:
+    # ✅ LOCKED: Encuentra el elemento con mayor peso de afinidad
+    # Si hay empate, elige aleatoriamente entre los empatados
+    var max_weight = affinity.max()
+    var dominant_indices = []
+    
+    for i in range(4):
+        if affinity[i] == max_weight:
+            dominant_indices.append(i)
+    
+    # Si hay empate, sortear
+    var chosen_index = dominant_indices[randi() % dominant_indices.size()]
+    
+    match chosen_index:
+        0: return Element.FUEGO
+        1: return Element.AGUA
+        2: return Element.TIERRA
+        3: return Element.AIRE
+    
+    return Element.FUEGO  # Fallback (nunca debería llegar aquí)
+
+func get_basic_shot_for_element(element: Element) -> String:
+    match element:
+        Element.FUEGO:
+            return "res://scripts/abilities/implementations/fire_shot.tres"
+        Element.AGUA:
+            return "res://scripts/abilities/implementations/water_shot.tres"
+        Element.TIERRA:
+            return "res://scripts/abilities/implementations/earth_shot.tres"
+        Element.AIRE:
+            return "res://scripts/abilities/implementations/air_shot.tres"
+    
+    return "res://scripts/abilities/implementations/fire_shot.tres"  # Fallback
 ```
 
 ---
@@ -2782,13 +2855,25 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ¿Habilidades híbridas (requieren 2 elementos)?
    - **Impacto**: Sin esto, puntos elementales no tienen uso
 
-3. **Lobby y Matchmaking MVP**
+3. **Sistema de Loadout** ⚠️ **ABIERTO**
+   - ⚠️ **Pendiente de decisión**: ¿Loadout guardado en PelotitaData o elegido pre-match?
+     - **Opción A**: Loadout persistente guardado en cada pelotita
+       - Pros: Personalización persistente, pelotita tiene "identidad" de loadout
+       - Cons: Cambiar loadout requiere menú separado, menos flexible
+     - **Opción B**: Loadout temporal elegido antes de cada duelo
+       - Pros: Flexibilidad táctica, adaptar a oponente conocido
+       - Cons: Setup adicional pre-match, menos "identidad fija" de pelotita
+   - **Impacto**: Afecta arquitectura de datos (`PelotitaData`), flujo de UI pre-match, y UX de equipamiento
+   - **Requiere decisión pronto** para implementar pantalla de selección/equipamiento
+   - **Estado**: ⚠️ ABIERTO
+
+4. **Lobby y Matchmaking MVP**
    - ¿Timeout de espera en lobby? (sugerencia: 60s, luego cancelar)
    - ¿Permitir bots AI si no hay segundo jugador? (sugerencia: sí, pero AI básico)
    - ¿Ready check o auto-start cuando ambos conectan?
    - **Impacto**: Flujo de usuario roto si no está claro
 
-4. **Desconexión en Match** ⚠️ **ABIERTO**
+5. **Desconexión en Match** ⚠️ **ABIERTO**
    - ⚠️ **Pendiente de decisión**: ¿Qué pasa si un jugador se desconecta mid-match?
      - Opción A: match termina, desconectado pierde
      - Opción B: pausa 10s para reconectar
@@ -2796,7 +2881,7 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - **Impacto**: Experiencia de usuario muy mala sin manejo de desconexión
    - **Estado**: ⚠️ ABIERTO - Requiere decisión
 
-5. **Múltiples Pelotitas** ✅ **COMPLETAMENTE LOCKED**
+6. **Múltiples Pelotitas** ✅ **COMPLETAMENTE LOCKED**
    - ✅ **Locked**: Límite gratuito de **3 pelotitas** en MVP
    - ✅ **Locked**: Borrado manual requerido para liberar espacio (doble confirmación)
    - ✅ **Locked**: Selección obligatoria de 1 pelotita antes de cada duelo
@@ -3172,7 +3257,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. Disconnect behavior y loadout system (persistente vs pre-match) marcados como abiertos. |
 
 ---
 
