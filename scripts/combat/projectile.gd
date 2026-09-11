@@ -6,6 +6,13 @@ class_name Projectile
 ## - Movimiento en dirección fija
 ## - Colisión y daño
 ## - Autoridad de red (solo el servidor simula física)
+##
+## ⚠️ FUTURO: Este sistema será reemplazado gradualmente por BallBody + antimatter
+## Ver docs/DESIGN.md sección "Visión: pelotas, masa y trayectorias"
+## BallBody implementará:
+## - Colisiones antimateria (masas se cancelan)
+## - Trayectorias pluggables (RectilinearTrajectory, ChaseTarget, etc.)
+## - Física basada en fuerzas en lugar de velocity directa
 
 @export var speed: float = 300.0
 @export var base_damage: int = 10

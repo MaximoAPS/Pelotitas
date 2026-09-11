@@ -4,6 +4,9 @@ class_name ElementalShot
 ##
 ## Mecánica unificada para los 4 elementos (fuego, agua, tierra, viento)
 ## Diferenciados solo por elemento y color
+##
+## ⚠️ FUTURO: Migrará a spawnnear BallBody con RectilinearTrajectory
+## en lugar de Projectile para aprovechar sistema de antimateria y masa
 
 const PROJECTILE_SCENE = preload("res://scenes/combat/projectile_elemental.tscn")
 
