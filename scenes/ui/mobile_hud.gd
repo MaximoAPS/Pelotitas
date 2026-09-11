@@ -35,6 +35,7 @@ func _ready() -> void:
 
 
 func _on_joystick_input(event: InputEvent) -> void:
+	# Soporte para touch (móvil)
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			# Inicio del toque
@@ -52,6 +53,24 @@ func _on_joystick_input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag:
 		if is_joystick_active and event.index == current_touch_index:
 			TouchInput.update_virtual_joystick(event.position)
+	
+	# Soporte para mouse (desktop testing)
+	elif event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				is_joystick_active = true
+				current_touch_index = 0  # Usar índice 0 para mouse
+				TouchInput.start_virtual_joystick(event.position, 0)
+			else:
+				if is_joystick_active:
+					is_joystick_active = false
+					current_touch_index = -1
+					TouchInput.end_virtual_joystick()
+					joystick_stick.position = joystick_initial_pos
+	
+	elif event is InputEventMouseMotion:
+		if is_joystick_active and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			TouchInput.update_virtual_joystick(event.position)
 
 
 func _on_move_direction_changed(direction: Vector2) -> void:
@@ -67,6 +86,7 @@ func _on_move_direction_changed(direction: Vector2) -> void:
 
 ## Manejo de habilidades con press-hold-drag-release
 func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
+	# Soporte para touch (móvil)
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			# Press: Iniciar apuntado
@@ -84,6 +104,27 @@ func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
 		if ability_touch_tracking.has(event.index) and ability_touch_tracking[event.index] == slot:
 			TouchInput.update_ability_aim(event.position)
 			# TODO: Actualizar indicador visual de dirección
+	
+	# Soporte para mouse (desktop testing)
+	elif event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				# Press: Iniciar apuntado
+				TouchInput.start_ability_aim(slot, event.position, 0)
+				ability_touch_tracking[0] = slot
+				# TODO: Mostrar indicador visual de apuntado
+			else:
+				# Release: Disparar habilidad
+				if ability_touch_tracking.has(0) and ability_touch_tracking[0] == slot:
+					TouchInput.fire_ability()
+					ability_touch_tracking.erase(0)
+	
+	elif event is InputEventMouseMotion:
+		# Drag con mouse: Actualizar dirección de apuntado
+		if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			if ability_touch_tracking.has(0) and ability_touch_tracking[0] == slot:
+				TouchInput.update_ability_aim(event.position)
+				# TODO: Actualizar indicador visual de dirección
 
 
 # Conectar eventos de botones a la función común
