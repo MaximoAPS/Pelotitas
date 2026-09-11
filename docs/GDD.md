@@ -729,7 +729,64 @@ func spawn_damage_number(damage: int):
 
 ---
 
-### 17. Post-Duel Flow - Return to Lobby, No Direct Rematch ✅ LOCKED
+### 17. Ability Cooldown UI - Radial/Overlay Progress on Button ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **Cooldown visual feedback**: Radial/circular overlay progress indicator on skill button
+- ✅ **NOT just disabled state**: Button must show clear visual progress, not just grey-out or disable
+- ✅ **Always visible**: Cooldown progress visible at all times when ability is on cooldown
+
+**Razón de diseño**:
+- 📱 **Mobile clarity**: Players need instant visual feedback of ability readiness on small screens
+- ⚡ **Combat flow**: Clear cooldown progress allows tactical planning (know when ability will be ready)
+- 🎮 **Modern UX pattern**: Radial progress is standard in mobile action games (MOBA, hero shooters)
+- ♿ **Accessibility**: Visual progress more informative than simple disabled state
+
+**Visual Design** (✅ provisional locked for MVP):
+- **Radial overlay**: Circular progress fill that sweeps clockwise from top (12 o'clock position)
+- **Color**: Semi-transparent dark overlay (e.g. Color(0, 0, 0, 0.6)) that fades as cooldown completes
+- **Button state**: Button remains visible and colored (element color), overlay on top
+- **Completion**: When cooldown ends, overlay disappears completely, button pulses briefly (optional feedback)
+
+**Implementation guideline** (✅ provisional locked for MVP):
+```gdscript
+# In MobileHUD ability button
+func update_cooldown_visual(progress: float):
+    # progress: 0.0 (ready) to 1.0 (just used)
+    cooldown_overlay.visible = progress > 0.0
+    
+    if progress > 0.0:
+        # Draw radial progress (arc from 0° to 360° * progress)
+        cooldown_overlay.material.set_shader_parameter("progress", progress)
+        # OR use TextureProgressBar with radial fill mode
+    else:
+        # Cooldown complete - optional: brief pulse/glow effect
+        play_ready_pulse()
+
+# Called from Player/Ability system each frame during cooldown
+func _process(delta):
+    for i in range(ability_buttons.size()):
+        var ability = player.loadout.get_usable(i)
+        if ability:
+            var cd_progress = ability.get_cooldown_progress()  # 0.0 to 1.0
+            ability_buttons[i].update_cooldown_visual(cd_progress)
+```
+
+**Alternative considered and rejected**:
+- ❌ **Simple disabled/grayed button**: Provides no information about when ability will be ready
+- ❌ **Numeric timer text**: Less intuitive than radial visual, harder to parse during combat
+- ❌ **Linear progress bar**: Less compact, doesn't fit circular button design as well
+
+**Post-MVP considerations**:
+- Different visual styles per element (fire = orange glow, water = blue ripple)
+- Sound effect when cooldown completes (deferred - audio out of MVP scope)
+- Haptic pulse when ability becomes ready again (Android vibration)
+
+**Estado**: ✅ LOCKED - Radial/overlay progress on ability buttons required for cooldown visualization
+
+---
+
+### 18. Post-Duel Flow - Return to Lobby, No Direct Rematch ✅ LOCKED
 
 **Decisión locked**:
 - ✅ **After Result Screen**: Return to **Lobby/Multiplayer Selection**, NOT direct rematch
@@ -773,7 +830,7 @@ Return to Lobby/Multiplayer Menu (or Main Menu)
 
 ---
 
-### 18. Camera System - Frame Both Players with Zoom Limits ✅ LOCKED
+### 19. Camera System - Frame Both Players with Zoom Limits ✅ LOCKED
 
 **Decisión locked**:
 - ✅ **Camera frames both players** dynamically (keeps both on-screen)
@@ -2754,7 +2811,7 @@ func get_selected_pelotita() -> PelotitaData:
 - **Botones de habilidad dinámicos** (derecha inferior) - ✅ LOCKED:
   - Mostrar **solo las habilidades equipadas** (1-3 botones)
   - Layout adapta posición/tamaño según cantidad
-  - Cada botón: cooldown visual + icono elemental
+  - Cada botón: **radial/overlay cooldown progress** + icono elemental (ver §17)
 - Barra de vida (superior)
 - Timer de match (superior derecha - ✅ 3:00 locked)
 

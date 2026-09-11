@@ -358,7 +358,7 @@ Sistema **press-and-hold-drag-release** para apuntado preciso:
 
 **HUD superior**: 
 - Barra de vida
-- Cooldowns visuales en botones (futuro: overlay circular)
+- **Cooldowns visuales**: Radial/overlay circular progress en botones (✅ locked - ver GDD §17)
 
 **Feedback**: 
 - Visual al presionar y durante drag
