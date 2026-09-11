@@ -268,19 +268,73 @@ class_name PelotitaData extends Resource
 @export var derrotas: int = 0
 ```
 
-**Creación de Pelotita**:
-1. Usuario ingresa nickname
-2. Sistema genera UUID
-3. Stats iniciales: `ataque = 50, defensa = 50, velocidad = 50, masa = 1.0`
-4. **Roll inicial**: +10 puntos distribuidos aleatoriamente entre ATK/DEF/Speed (puede ser 10-0-0, 0-10-0, 5-3-2, etc.)
-   - Ejemplo: roll devuelve `[7, 2, 1]` → ATK=57, DEF=52, Speed=51
-5. Generar afinidades elementales secretas (4 floats aleatorios normalizados a suma = 1.0)
-   - Ejemplo: `[0.35, 0.15, 0.25, 0.25]` para Fuego/Agua/Tierra/Aire
-6. Puntos elementales iniciales = 0 (se ganan con level-ups)
-7. Habilidades iniciales: unlock automático de disparos básicos de cada elemento (4 habilidades básicas desbloqueadas)
-8. Loadout inicial: equipar 3 disparos básicos + pasiva nula o básica
+**Flujo de Creación de Pelotita** (Locked):
 
-**Resultado**: Dos pelotitas creadas al mismo tiempo serán diferentes desde nivel 0 debido al roll inicial aleatorio.
+**Input del jugador**:
+- ✅ **Nombre/nickname** (único input requerido)
+- ❌ **NO elige**: stats, color, elemento, apariencia
+
+**Proceso automático del sistema**:
+1. Validar nickname (único, longitud 3-16 caracteres)
+2. Generar UUID único
+3. Stats base: `ataque = 50, defensa = 50, velocidad = 50, masa = 1.0`
+4. **Roll inicial**: +10 puntos distribuidos aleatoriamente entre ATK/DEF/SPD
+   - Algoritmo: generar 3 enteros no negativos que sumen 10
+   - Ejemplo: `[7, 2, 1]` → ATK=57, DEF=52, SPD=51
+5. **Generar afinidades elementales secretas** (4 floats normalizados, suma = 1.0)
+   - Ejemplo: `[0.38, 0.12, 0.28, 0.22]` → Fuego dominante (38%)
+6. **Color visual**: derivado del elemento dominante de afinidad
+   - Fuego dominante → tonos rojos/naranjas
+   - Agua dominante → tonos azules
+   - Tierra dominante → tonos marrones/verdes
+   - Aire dominante → tonos blancos/celestes
+   - ⚠️ El jugador NO ve las afinidades, solo el color visual resultante
+7. Puntos elementales iniciales = 0 (se ganan en level-ups)
+8. Habilidades desbloqueadas: 4 disparos básicos (uno por elemento)
+9. Loadout inicial: 3 disparos básicos equipados + sin pasiva
+
+**Resultado**: 
+- Dos pelotitas creadas al mismo tiempo son **diferentes** (stats roll único)
+- El jugador **descubre** la identidad de su pelotita a través del juego (colores, level-ups)
+- UX simple: solo ingresa nombre, el resto es sorpresa controlada
+
+**UI mockup**:
+```
+┌─────────────────────────────────┐
+│     Crear Nueva Pelotita        │
+├─────────────────────────────────┤
+│                                 │
+│  Nombre:                        │
+│  [___________________]          │
+│                                 │
+│  (3-16 caracteres)              │
+│                                 │
+│  [Crear]  [Cancelar]            │
+│                                 │
+└─────────────────────────────────┘
+
+↓ (después de crear)
+
+┌─────────────────────────────────┐
+│    ¡Pelotita Creada!            │
+├─────────────────────────────────┤
+│                                 │
+│         ( ● )                   │
+│       /  |  \                   │
+│     Color: 🔴 Rojizo            │
+│                                 │
+│  "Chispa"                       │
+│  Nivel 0                        │
+│                                 │
+│  Stats iniciales:               │
+│    ATK: 57  DEF: 52  SPD: 51   │
+│    Masa: 1.0                    │
+│                                 │
+│  [Jugar Duelo]  [Ver Pelotitas] │
+└─────────────────────────────────┘
+```
+
+**Filosofía de diseño**: El jugador NO elige activamente la build de su pelotita, sino que la **descubre** a medida que juega y ve qué elemento domina en sus level-ups. Esto crea apego emocional ("mi pelotita resultó ser de Fuego") vs planificación fría.
 
 ### 4.2 Player (Entidad en Match)
 
