@@ -307,7 +307,71 @@ func show_welcome_screen():
 
 ---
 
-### 11. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 11. Internacionalización (i18n) - Spanish + English ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **Dos idiomas en MVP**: Español (ES) + English (EN)
+- ✅ **Detección automática**: Language = device locale on first launch
+- ✅ **Fallback**: Si device locale != ES ni EN → fallback **Spanish**
+- ✅ **Cambio manual**: User can switch language in Settings screen
+
+**Idiomas soportados**:
+| Idioma | Código ISO | Estado | Prioridad |
+|--------|-----------|--------|-----------|
+| **Español** | `es` | MVP | P0 (default fallback) |
+| **English** | `en` | MVP | P0 |
+| Portugués | `pt` | Futuro | P1 (post-MVP) |
+| Francés | `fr` | Futuro | P2 |
+
+**Lógica de detección** (first launch):
+```gdscript
+# En Boot._ready() o al crear UserPrefs
+func detect_language() -> String:
+    var locale = OS.get_locale()  # Ej: "es_AR", "en_US", "fr_FR"
+    var lang_code = locale.split("_")[0]  # Extrae "es", "en", "fr"
+    
+    match lang_code:
+        "es": return "es"  # Spanish
+        "en": return "en"  # English
+        _: return "es"     # Fallback: Spanish por defecto
+```
+
+**Strings a traducir** (estimado MVP):
+- ~50-80 strings de UI:
+  - Botones: "Crear", "Jugar", "Volver", "Equipar", etc.
+  - Labels: "Nivel", "HP", "Victoria", "Derrota", "Empate"
+  - Menús: Main menu, lobby, result screen
+  - First launch: "Enter your nickname", "Welcome to Pelotitas"
+- ~10-15 strings de tutoriales/ayuda (si se implementan)
+- ~20-30 strings de habilidades (nombres + descripciones cortas)
+
+**Implementación sugerida**:
+- **Godot i18n built-in**: `TranslationServer` + archivos `.csv` o `.po`
+- **Archivos de traducción**:
+  - `res://localization/strings_es.csv` (base, español)
+  - `res://localization/strings_en.csv` (traducción inglés)
+- **Uso en código**:
+  ```gdscript
+  # En lugar de hardcodear strings
+  button.text = tr("PLAY_BUTTON")  # "Jugar" o "Play" según idioma activo
+  label.text = tr("VICTORY") + "!"  # "¡Victoria!" o "Victory!"
+  ```
+
+**Settings screen** (futuro):
+- Dropdown o toggle: "Idioma / Language"
+- Opciones: "Español", "English"
+- Al cambiar: `TranslationServer.set_locale(new_lang)` + reload UI
+
+**Por qué Spanish como fallback**:
+- 📊 **Target primario**: Juego desarrollado en Argentina/LATAM
+- 🌎 **Comunidad esperada**: Jugadores hispanohablantes como base inicial
+- ✅ **Consistencia**: Todo el GDD está en español, assets iniciales en español
+
+**Estado**: ✅ CERRADO - MVP con ES + EN
+
+---
+
+### 12. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -951,6 +1015,13 @@ class_name UserPrefs extends Resource
 # - Stored locally in user://user_prefs.tres
 # - Can be edited later in Settings screen
 # - Used for lobby/multiplayer display
+
+# ✅ LOCKED: Language/i18n for MVP
+@export var language: String = ""  # ISO code: "es" or "en"
+# - Auto-detected from device locale on first launch
+# - Supported: Spanish ("es"), English ("en")
+# - Fallback: Spanish if device locale is neither ES nor EN
+# - Can be changed in Settings screen
 
 # ⚠️ Audio volumes (futuro - NO en MVP)
 @export var master_volume: float = 1.0  # Out of MVP scope
@@ -2544,8 +2615,11 @@ pelotitas/
 │   │   └── music/
 │   ├── fonts/
 │   │   └── (fuentes custom para UI)
-│   └── vfx/
-│       └── (partículas, shaders)
+│   ├── vfx/
+│   │   └── (partículas, shaders)
+│   └── localization/
+│       ├── strings_es.csv  # ✅ MVP: Español (base)
+│       └── strings_en.csv  # ✅ MVP: English (traducción)
 │
 └── addons/
     └── (futuros: plugins Godot si usamos)
@@ -2994,6 +3068,7 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 - Definir curva de XP y level cap
 - Implementar level-up completo (UI, animación)
 - Persistencia funcional (save/load)
+- ✅ **i18n setup**: TranslationServer + archivos ES/EN (strings ~50-80)
 - Crear 2-3 habilidades avanzadas por elemento (total: 8-12)
 - UI de equipar loadout
 - Skill tree básico (desbloqueo con puntos)
@@ -3452,7 +3527,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values. Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values. Disconnect behavior marcado como abierto. |
 
 ---
 
