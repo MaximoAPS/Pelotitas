@@ -16,6 +16,13 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 
 Estas decisiones están **bloqueadas** y no deben cambiarse sin aprobación explícita del usuario.
 
+### Confirmación de Decisiones Core
+
+Las siguientes decisiones están **firmemente locked** para MVP:
+- ✅ **XP se gana por victorias** (fuente primaria)
+- ✅ **Level cap inicial: 10** (Tier 1), luego +10 por tier con expansiones de contenido
+- ✅ **Roster gratuito: 3 pelotitas** máximo en MVP
+
 ### Género y Mecánica Core
 
 - **Género**: Batallas de pelotitas elementales (Fuego, Agua, Tierra, Aire/Viento)

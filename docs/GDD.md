@@ -1545,13 +1545,12 @@ user://
 ├── pelotitas/
 │   ├── pelotita_001.tres     (PelotitaData Resource)
 │   ├── pelotita_002.tres
-│   ├── pelotita_003.tres
-│   └── (máximo 3-5 en MVP, decidir cuál)
+│   └── pelotita_003.tres     (máximo 3 en MVP)
 └── stats.json                (estadísticas globales, futuro)
 ```
 
 **Límite de pelotitas** (Locked):
-- **MVP**: 3-5 pelotitas gratis (decidir entre 3 o 5, pick one antes de launch)
+- **MVP**: **3 pelotitas gratis** (máximo)
 - **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
 
 #### Save/Load de Pelotita
@@ -1581,6 +1580,10 @@ func list_all_pelotitas() -> Array[PelotitaData]:
                 pelotitas.append(pelotita)
             file_name = dir.get_next()
     return pelotitas
+
+func can_create_new_pelotita() -> bool:
+    const MAX_FREE_PELOTITAS: int = 3
+    return list_all_pelotitas().size() < MAX_FREE_PELOTITAS
 ```
 
 ---
@@ -2134,9 +2137,9 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - **Impacto**: Experiencia de usuario muy mala sin manejo de desconexión
 
 5. **Múltiples Pelotitas** ✅ **LOCKED**
-   - ✅ **Locked**: Límite gratuito de **3 o 5 pelotitas** (MVP: decidir entre 3 o 5, pick one)
+   - ✅ **Locked**: Límite gratuito de **3 pelotitas** en MVP
    - ⛔ **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
-   - **Impacto**: Afecta diseño de UI (lista de pelotitas, selección)
+   - **Impacto**: UI debe mostrar lista de hasta 3 pelotitas, diseño compacto
 
 ---
 
