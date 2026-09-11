@@ -16,7 +16,7 @@ class_name Mode
 @export var max_players: int = 2
 @export var map_scene_path: String = ""
 
-var active_players: Array[Player] = []
+var active_players: Array = []  # Array of Player instances
 var match_start_time: float = 0.0
 
 
