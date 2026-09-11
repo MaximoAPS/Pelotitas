@@ -33,7 +33,7 @@ var speed_m_s: float = 1.0
 
 var current_health: int = 100
 var pelotita_id: String = ""
-var loadout: Loadout = null
+var loadout = null  # Loadout type - untyped to avoid circular dependency
 
 # Physics collision tracking
 var last_wall_collision_speed: float = 0.0
@@ -197,7 +197,7 @@ func _die() -> void:
 	# TODO: Desactivar controles, reproducir animación de muerte
 
 
-func set_loadout(new_loadout: Loadout) -> void:
+func set_loadout(new_loadout) -> void:  # Loadout type
 	loadout = new_loadout
 	if loadout:
 		loadout.owner_player = self

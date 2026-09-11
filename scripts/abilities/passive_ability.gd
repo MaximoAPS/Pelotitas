@@ -12,7 +12,7 @@ func get_ability_type() -> String:
 
 
 ## Aplicar el efecto pasivo al jugador
-func apply(player: Player) -> void:
+func apply(player) -> void:  # Player type
 	push_warning("[PassiveAbility] apply() no implementado para %s" % ability_id)
 	# TODO: Implementar modificación de stats
 	# Ejemplos:
@@ -21,5 +21,5 @@ func apply(player: Player) -> void:
 
 
 ## Remover el efecto pasivo
-func remove(player: Player) -> void:
+func remove(player) -> void:  # Player type
 	push_warning("[PassiveAbility] remove() no implementado para %s" % ability_id)

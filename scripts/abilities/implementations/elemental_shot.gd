@@ -15,7 +15,7 @@ const PROJECTILE_SCENE = preload("res://scenes/combat/projectile_elemental.tscn"
 @export var projectile_color: Color = Color.WHITE
 
 
-func execute(caster: Player, aim_direction: Vector2) -> void:
+func execute(caster, aim_direction: Vector2) -> void:  # caster is Player type
 	if not caster:
 		return
 	
@@ -58,7 +58,7 @@ func _apply_element_color(projectile: Node2D) -> void:
 
 
 ## Helper local para spawning sin red
-func _spawn_local_projectile(arena: Node, spawn_pos: Vector2, aim_direction: Vector2, caster: Player) -> void:
+func _spawn_local_projectile(arena: Node, spawn_pos: Vector2, aim_direction: Vector2, caster) -> void:  # caster is Player type
 	var projectile = PROJECTILE_SCENE.instantiate()
 	
 	if projectile is Projectile:

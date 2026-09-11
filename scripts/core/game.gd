@@ -19,7 +19,7 @@ enum GameState {
 }
 
 var current_state: GameState = GameState.BOOT
-var active_mode: Mode = null
+var active_mode = null  # Mode type - untyped to avoid circular dependency at parse time
 
 
 func _ready() -> void:
@@ -36,7 +36,7 @@ func change_state(new_state: GameState) -> void:
 	game_state_changed.emit(new_state)
 
 
-func start_duel(mode: Mode) -> void:
+func start_duel(mode) -> void:  # Mode type
 	active_mode = mode
 	change_state(GameState.IN_DUEL)
 	# TODO: Cargar escena de duelo, pasar modo activo
