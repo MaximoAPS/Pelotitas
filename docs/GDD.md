@@ -450,7 +450,129 @@ func show_quit_confirmation():
 
 ---
 
-### 13. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 13. Forfeit y Disconnect - Loss + Opponent Win XP ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **Forfeit intencional = loss** para quien abandona
+- ✅ **Disconnect = forfeit** (tratado como abandono en MVP, salvo contradicción futura)
+- ✅ **Opponent wins**: Rival recibe victoria completa
+- ✅ **Opponent gets win XP**: Rival recibe XP de victoria según nivel del forfeiter
+
+**Comportamiento completo**:
+
+| Evento | Forfeiter/Disconnect | Opponent |
+|--------|---------------------|----------|
+| **Abandon intencional** (ESC → Abandonar) | Loss (derrota registrada) + 0 XP | Win (victoria registrada) + Win XP |
+| **Disconnect** (timeout 5-10s) | Loss (como forfeit) + 0 XP | Win + Win XP |
+| **Crash/app killed** | Loss (como disconnect) + 0 XP | Win + Win XP |
+
+**Fórmula de XP del opponent** (mismo sistema que victoria normal):
+```gdscript
+# Opponent recibe XP según diferencia de niveles
+var forfeiter_level = forfeiter_pelotita.level
+var opponent_level = opponent_pelotita.level
+var win_xp = Progression.calculate_win_xp(opponent_level, forfeiter_level)
+
+# Ejemplos:
+# - Forfeiter nivel 5, opponent nivel 5 → opponent recibe 25 XP (base)
+# - Forfeiter nivel 8, opponent nivel 5 → opponent recibe 40 XP (+15 bonus)
+# - Forfeiter nivel 3, opponent nivel 5 → opponent recibe 15 XP (-10 penalty)
+```
+
+**Razón de diseño**:
+- ⚔️ **Anti-griefing**: Penalizar abandono intencional (registra como derrota)
+- 💰 **Recompensa al opponent**: No castigar al rival por disconnect del otro
+- ⚖️ **Fairness**: Opponent invirtió tiempo, merece XP de victoria
+- 🎯 **Simplicidad MVP**: Disconnect = forfeit (sin distinción de causa)
+
+**Implementación**:
+```gdscript
+# En Match/Arena cuando se detecta disconnect o forfeit
+func handle_player_forfeit(forfeiter_peer_id: int):
+    var forfeiter = get_player_by_peer_id(forfeiter_peer_id)
+    var opponent = get_opponent(forfeiter)
+    
+    # Match termina
+    match_state = MatchState.FINISHED
+    
+    # Registrar resultado
+    var forfeiter_data = forfeiter.pelotita_data
+    var opponent_data = opponent.pelotita_data
+    
+    # Forfeiter: derrota + 0 XP
+    forfeiter_data.derrotas += 1
+    forfeiter_data.total_duelos += 1
+    # No award XP (0 XP en derrota en MVP)
+    
+    # Opponent: victoria + win XP
+    opponent_data.victorias += 1
+    opponent_data.total_duelos += 1
+    var win_xp = Progression.calculate_win_xp(
+        opponent_data.level,
+        forfeiter_data.level
+    )
+    Progression.award_xp(opponent_data, win_xp)
+    
+    # Guardar ambas pelotitas
+    Progression.save_pelotita(forfeiter_data)
+    Progression.save_pelotita(opponent_data)
+    
+    # Mostrar result screen
+    show_result_screen(opponent.peer_id, "OPPONENT_FORFEITED")
+
+# Detección de disconnect
+func _process(delta):
+    if match_state != MatchState.ACTIVE:
+        return
+    
+    # Verificar pings de ambos jugadores
+    for player in players:
+        if not player.is_connected():
+            player.disconnect_timer += delta
+            if player.disconnect_timer >= DISCONNECT_TIMEOUT:  # 5-10s
+                handle_player_forfeit(player.peer_id)
+                break
+```
+
+**UI de resultado** (para opponent):
+```
+┌─────────────────────────────────┐
+│         🏆 VICTORIA 🏆          │
+├─────────────────────────────────┤
+│                                 │
+│  Oponente abandonó el duelo     │
+│                                 │
+│  XP ganada: +40                 │
+│  XP total: 520 / 760            │
+│                                 │
+│  [Continuar]                    │
+└─────────────────────────────────┘
+```
+
+**UI de resultado** (para forfeiter):
+```
+┌─────────────────────────────────┐
+│         ❌ DERROTA ❌           │
+├─────────────────────────────────┤
+│                                 │
+│  Abandonaste el duelo           │
+│                                 │
+│  XP ganada: 0                   │
+│                                 │
+│  [Continuar]                    │
+└─────────────────────────────────┘
+```
+
+**Notas**:
+- ⚠️ **Provisional para disconnect**: Si en el futuro se distingue disconnect accidental vs intencional, puede cambiar
+- ⚠️ **MVP simplificado**: No distingue causa de disconnect (red, crash, intencional)
+- 🔮 **Futuro**: Posible implementación de reconnect window o "forgiveness" para disconnects raros
+
+**Estado**: ✅ COMPLETAMENTE CERRADO
+
+---
+
+### 14. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -3220,13 +3342,16 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ¿Ready check o auto-start cuando ambos conectan?
    - **Impacto**: Flujo de usuario roto si no está claro
 
-5. **Desconexión en Match** ✅ **LOCKED (implícitamente via pause decision)**
-   - ✅ **Locked implícitamente**: Opción A - match termina, desconectado pierde
+5. **Desconexión y Forfeit en Match** ✅ **COMPLETAMENTE LOCKED**
+   - ✅ **Forfeit intencional** (abandonar match): Loss para quien abandona, opponent wins
+   - ✅ **Disconnect = forfeit** (tratado como abandono intencional en MVP)
+   - ✅ **Opponent gets win XP**: Rival recibe XP de victoria completa (no penalización)
+   - ✅ **Forfeiter gets 0 XP**: Quien abandona/desconecta recibe 0 XP (derrota)
+   - ✅ **Match termination**: Match termina inmediatamente al detectar disconnect/forfeit
    - ✅ **No pause para reconectar**: Opción B descartada (no hay pause en multiplayer)
    - ⛔ **Out of MVP**: Opción C (AI takeover) - futuro lejano
-   - **Razón**: No pause en PvP → disconnect = forfeit automático
-   - **Timeout de conexión**: ~5-10s sin respuesta = desconexión detectada
-   - **Estado**: ✅ CERRADO (via pause decision)
+   - **Timeout de conexión**: ~5-10s sin respuesta = desconexión detectada → forfeit
+   - **Estado**: ✅ COMPLETAMENTE CERRADO
 
 6. **Múltiples Pelotitas** ✅ **COMPLETAMENTE LOCKED**
    - ✅ **Locked**: Límite gratuito de **3 pelotitas** en MVP
@@ -3606,7 +3731,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. (13) Pause solo en local/test, no en multiplayer PvP (fairness competitivo). Disconnect handling locked implícitamente: match termina, desconectado pierde (no pause para reconectar). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. (13) Pause solo en local/test, no en multiplayer PvP (fairness competitivo). (14) Forfeit/disconnect = loss para quien abandona/desconecta, opponent wins + recibe win XP (mismo que victoria normal). Disconnect tratado como forfeit en MVP (provisional). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values, disconnect=forfeit. |
 
 ---
 
