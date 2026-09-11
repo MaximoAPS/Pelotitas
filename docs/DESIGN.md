@@ -12,7 +12,194 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 
 ---
 
-## Decisiones de Diseño Bloqueadas
+## ✅ Decisiones Cerradas
+
+Estas decisiones están **bloqueadas** y no deben cambiarse sin aprobación explícita del usuario.
+
+### Género y Mecánica Core
+
+- **Género**: Batallas de pelotitas elementales (Fuego, Agua, Tierra, Aire/Viento)
+- **Habilidades spawnen pelotitas coloreadas** según elemento
+- **Tipos de habilidades**:
+  - Disparos simples hacia adelante
+  - Invocaciones (summons) que atacan automáticamente
+  - Muros para cobertura y defensa
+
+### Vista y Plataforma
+
+- **Vista**: 2D top-down estilizado
+  - Física completamente 2D
+  - Esferas renderizadas con sombreado pseudo-3D (apariencia volumétrica)
+  - Orientación landscape (horizontal)
+- **Plataforma primaria**: Android móvil
+- **Plataforma secundaria**: PC standalone para testing (editor embebido come input)
+
+### Multijugador MVP
+
+- **Red**: ENet host/join en misma WiFi local
+- **NO cuentas de usuario** en MVP
+- **Nickname local** solamente
+- **Servidor autoritativo** para combate y física
+
+### Modos de Juego
+
+- **Arquitectura modular**: Modos plug-in con núcleo de combate compartido
+- **Primer modo MVP**: **Duelo por Vida** (1v1)
+  - Victoria: reducir HP enemigo a 0
+  - Mapa: arena simple
+- Futuros modos fáciles de agregar (CTF, King of the Hill, etc.)
+
+### Controles Móviles
+
+**Layout definitivo** (twin-stick-ish):
+- **Palanca virtual** (izquierda inferior): movimiento 360° con deadzone
+- **3 botones de habilidades usables** (derecha inferior): press-hold-drag-release para apuntar
+- **Habilidad pasiva**: sin botón, siempre activa automáticamente (diferida)
+- **HUD superior**: barra de vida
+
+⚠️ **Este layout es definitivo** y no debe cambiarse sin aprobación del usuario.
+
+### Stats de Jugador
+
+Cada pelotita tiene **4 stats principales**:
+- **Ataque** (`ataque`): daño infligido
+- **Defensa** (`defensa`): reducción de daño recibido
+- **Velocidad** (`velocidad`): multiplicador de velocidad de movimiento
+- **Masa** (`masa`): peso en colisiones elásticas
+
+**Fórmula de daño**:
+```
+Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
+```
+
+### Sistema de Velocidad
+
+- **Relativo a la media geométrica** de velocidades de participantes
+- **SPD = 1.0** (cuando velocidad stat = media geométrica) equivale a **1.0 m/s virtual**
+- **Conversión**: `speed_px_s = speed_m_s × 200` (PIXELS_PER_METER = 200)
+- **Aceleración**: fracción de `vmax` (inercia con aceleración ~900 px/s²)
+- **Fricción**: desaceleración gradual (~700 px/s²) cuando no hay input
+
+### Progresión y Level-Up
+
+**Al subir de nivel, se otorgan**:
+1. **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed
+   - Distribución aleatoria (enteros no negativos que suman exactamente 10)
+2. **+1 punto de habilidad elemental** según **afinidad secreta** (estilo DinoRPG)
+   - Cada pelotita tiene pesos elementales permanentes generados al crearla (ej: Fuego 40%, Agua 20%, Tierra 10%, Aire 30%)
+   - Pesos son **secretos** y nunca se muestran al jugador
+   - El elemento del punto otorgado se determina por sorteo aleatorio según estos pesos
+
+### Loadout
+
+- **3 habilidades usables** (activables con botones)
+- **1 habilidad pasiva** (efecto automático permanente)
+
+### Disparo Básico Elemental
+
+Cada elemento tiene un disparo básico con:
+- **Velocidad**: configurada por habilidad (ej: 400 px/s)
+- **Masa**: propiedad del proyectil
+- **Radio**: tamaño de colisión
+- **Daño bruto**: calculado según ATK vs DEF
+- **Al impactar**: 
+  - VFX de explosión (placeholder: círculo coloreado)
+  - Aplicar daño vs DEF enemigo
+  - Knockback proporcional a masa × velocidad (~150 px/s inicial)
+  - Proyectil desaparece (despawn)
+
+### Física y Colisiones
+
+**Entre jugadores (pelotita vs pelotita)**:
+- Colisiones elásticas perfectas (conservación de momento y energía)
+- **NO causan daño** por sí mismas
+- Masa determina quién empuja más
+
+**Con paredes**:
+- **SÍ causan daño** basado en velocidad de impacto
+- Fórmula: `wall_damage = (impact_speed - 100.0) × 0.02 × masa`
+- Umbral mínimo: 100 px/s
+
+**Futuro: Antimatter entre proyectiles rivales**
+- Colisión entre proyectiles enemigos cancela masas (ver sección de visión a largo plazo)
+
+### Dummy para Testing
+
+- **Player 2 dummy**: estacionario con trayectoria que busca centro (aceleración más débil que Player 1)
+- NO persigue al jugador activo
+- Solo sirve como target de prueba
+
+### Flujo de la Aplicación
+
+```
+Boot → Menú Principal → Duelo → Resultado (Otra vez / Menú)
+```
+
+- **NO auto-start** en duelo
+- Usuario siempre elige desde menú
+
+### Orden de Desarrollo
+
+1. **Core hasta que matches multiplayer funcionen**
+2. Definir valores de stats y niveles
+3. Implementar habilidades elementales concretas
+4. UI beta touch-friendly
+5. Balance, modos adicionales, y escalabilidad
+
+---
+
+## ❓ Pendientes de Definir
+
+Estas son **preguntas abiertas** que aún no tienen respuesta definitiva. **NO inventar respuestas**.
+
+### Distribución de Puntos de Stats
+
+- ¿Los 10 puntos de stats pueden asignarse todos a un solo stat, o hay mínimos/máximos por stat?
+
+### Stats Iniciales
+
+- ¿Valores iniciales de ATK/DEF/Speed/masa en nivel 1?
+
+### Sistema de Experiencia
+
+- ¿Fuentes de XP? (victoria, derrota, participación, etc.)
+- ¿Cantidades de XP otorgadas por cada fuente?
+- ¿Nivel máximo (cap)?
+
+### Pelotitas por Cuenta
+
+- ¿Cuántas pelotitas puede tener un jugador por cuenta/dispositivo?
+- ¿Cómo es el flujo de creación de pelotita?
+
+### Moneda Soft
+
+- ¿Habrá moneda soft (coins, gems, etc.) o no?
+
+### Configuración de Mapa
+
+- ¿Tamaño de mapa para duelo?
+- ¿Obstáculos en el mapa?
+
+### Sistema de Recursos
+
+- ¿Cooldowns por defecto para habilidades?
+- ¿Sistema de mana/energía o solo cooldowns?
+
+### Reglas de Multijugador
+
+- ¿Qué pasa si un jugador se desconecta?
+- ¿Hay opción de rejoin/reconnect?
+
+### Mecánica de "Explotar"
+
+- ¿La explosión de proyectiles tiene área de efecto (AoE)?
+- ¿O es solo daño directo single-target + VFX?
+
+---
+
+## Detalle Técnico: Decisiones de Diseño Bloqueadas
+
+Esta sección expande las decisiones cerradas con detalles de implementación.
 
 ### 1. Género y Temática
 
@@ -153,7 +340,15 @@ Pelotita "Chispa":
   Level up 3: tira 15% → Agua (+1 punto Agua)
 ```
 
-### 10. Loadout por Duelo
+**Distribución de puntos de stats**:
+
+Al subir de nivel, se otorgan **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed:
+- Son enteros no negativos que suman exactamente 10
+- Distribución es aleatoria (cada stat puede recibir entre 0 y 10 puntos en un level-up)
+
+⚠️ **Pendiente de definir**: ¿Hay mínimos/máximos por stat? (ver sección "Pendientes de Definir")
+
+### 6. Loadout por Duelo
 
 Cada pelotita equipa **3 habilidades usables + 1 pasiva** antes de entrar al duelo.
 
@@ -906,13 +1101,14 @@ Para desarrollo en PC/Mac sin touch:
 
 Para pruebas sin multiplayer, el juego spawna:
 - **Player 1**: Controlable con teclado/touch (azul)
-- **Player 2**: Dummy estacionario que NO se mueve ni persigue (rojo/naranja)
+- **Player 2**: Dummy con trayectoria que busca el centro del mapa (rojo/naranja)
+  - Aceleración más débil que Player 1
   - Puede recibir daño de proyectiles
   - Participa en colisiones elásticas (puede ser empujado)
   - Recibe daño de paredes si es empujado contra ellas
-  - **NO tiene lógica de AI** - solo es un target de prueba
+  - **NO persigue al jugador** - solo se mueve hacia el centro
 
-Este enfoque permite testear física y habilidades sin implementar oponente inteligente.
+Este enfoque permite testear física y habilidades sin implementar oponente inteligente completo.
 
 ## Notas Finales
 
