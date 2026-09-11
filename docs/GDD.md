@@ -1,10 +1,123 @@
 # Game Design Document - Pelotitas
 
-**Versión**: 0.2 (MVP en desarrollo)  
+**Versión**: 0.3 (MVP en desarrollo)  
 **Fecha**: Septiembre 2026  
 **Plataforma primaria**: Android móvil  
 **Engine**: Godot 4.x  
 **Género**: Action PvP - Batallas de pelotitas elementales
+
+---
+
+## ✅ Decisiones Locked Recientes (v0.3)
+
+Las siguientes decisiones de diseño han sido **cerradas y locked** en esta versión:
+
+### 1. Duelo por Vida - Timer y Victoria por Timeout ✅ CERRADO
+
+- ✅ **Timer fijo de 3:00 minutos** (180 segundos)
+- ✅ **Al acabar el tiempo**: Gana el jugador con **mayor HP actual**
+- ✅ **HP igual al timeout**: **Empate** (sin ganador, no hay desempate adicional)
+- ✅ Victoria por eliminación sigue funcionando (HP rival a 0)
+
+**Implementación**:
+```gdscript
+const MATCH_DURATION: float = 180.0  # 3 minutos
+```
+
+**Estado**: ✅ CERRADO - No requiere más discusión
+
+---
+
+### 2. Sistema de Recursos: Solo Cooldowns, Sin Mana ✅ CERRADO
+
+- ✅ **No hay sistema de mana/energía** en ningún momento del juego
+- ✅ **Solo cooldowns fijos** por habilidad
+- ✅ **Disparo básico**: Cooldown provisional de **1.0s** (sujeto a balance)
+- ⚠️ Habilidades avanzadas: cooldowns intermedios (~3-5s) y ultimates (~10-15s) - valores exactos TBD balance
+
+**Razón de diseño**: Simplicidad, ritmo de combate directo sin gestión de recursos
+
+**Estado**: ✅ CERRADO - Arquitectura de habilidades confirmada
+
+---
+
+### 3. Obstáculos en Mapa - Comportamiento Completo ✅ CERRADO
+
+**Propiedades de obstáculos** (confirmadas en v0.2, reforzadas en v0.3):
+- ✅ **Indestructibles** (no tienen HP, no se pueden destruir)
+- ✅ **Bloquean movimiento** de jugadores (StaticBody2D)
+- ✅ **Bloquean proyectiles** (collision_mask incluye layer de proyectiles)
+
+**Colisión Jugador vs Obstáculo** ✅ LOCKED:
+- ✅ Jugadores **reciben daño** al impactar obstáculo a alta velocidad
+- ✅ **Misma fórmula** que colisión con paredes:
+  ```
+  obstacle_damage = (impact_speed - WALL_DAMAGE_THRESHOLD) × WALL_DAMAGE_MULTIPLIER × masa
+  ```
+- ✅ Consistencia: impactar algo sólido a alta velocidad duele igual (pared u obstáculo)
+
+**Colisión Proyectil vs Obstáculo** ✅ LOCKED:
+- ✅ Proyectil **explota con VFX** elemental (partículas de color)
+- ✅ Proyectil **desaparece** inmediatamente después de explosión (despawn)
+- ✅ **Sin daño AoE**: La explosión es puramente visual, no daña jugadores cercanos
+- ✅ Cover efectivo: esconderse detrás de obstáculo **bloquea completamente** proyectiles enemigos
+
+**Estado**: ✅ CERRADO - Interacción completa definida
+
+---
+
+### 4. Roster de Pelotitas - Sistema Completo ✅ CERRADO
+
+**Límites y Creación**:
+- ✅ **Máximo 3 pelotitas gratuitas** en MVP (no más)
+- ✅ **Crear nueva pelotita**: Solo requiere **nombre/nickname** (3-16 caracteres)
+- ✅ **Masa fija**: Todas las pelotitas tienen `masa = 1.0` (no varía por nivel, roll, ni stats)
+- ✅ **Stats iniciales**: Base 50 + roll aleatorio de +10 puntos entre ATK/DEF/SPD
+- ✅ **Afinidades secretas**: Generadas aleatoriamente, nunca mostradas al jugador
+
+**Borrado para Liberar Espacio**:
+- ✅ **Roster lleno (3/3)**: Debe borrar 1 pelotita para crear nueva
+- ✅ **Doble confirmación**: 
+  1. Modal con stats completos + botón [Borrar]
+  2. Input manual del nombre exacto para confirmar
+- ✅ **Sin undo**: Borrado es permanente (archivo `.tres` eliminado)
+
+**Selección Pre-Duelo**:
+- ✅ **Obligatorio**: Antes de iniciar duelo, jugador **debe seleccionar 1 pelotita** del roster
+- ✅ **Pantalla de selección**: Muestra cards con stats, nivel, récord (victorias/derrotas)
+- ✅ **Progresión**: XP ganada en el match se asigna a la pelotita seleccionada
+
+**Estado**: ✅ CERRADO - Sistema completo de roster definido
+
+---
+
+### 5. Curvas de Progresión - Confirmadas ✅ CERRADO
+
+**Ya estaban locked en v0.2, reconfirmadas en v0.3**:
+- ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
+- ✅ **Level cap inicial**: 10 (expansiones futuras +10 por tier)
+- ✅ **XP por victoria**: Fórmula basada en diferencia de niveles (base 25, ±5 por diff, rango 5-65)
+- ✅ **XP por derrota**: 0 XP en MVP
+
+**Estado**: ✅ CERRADO (desde v0.2)
+
+---
+
+### ⚠️ Preguntas Abiertas Restantes
+
+**Única pregunta de alta prioridad aún abierta**:
+
+**Desconexión en Match** ⚠️ **ABIERTO**:
+- ⚠️ ¿Qué pasa si un jugador se desconecta mid-match?
+  - Opción A: match termina, desconectado pierde
+  - Opción B: pausa 10s para reconectar
+  - Opción C: AI toma control temporalmente
+- **Impacto**: Experiencia de usuario, requiere decisión pronto
+
+**Otras preguntas abiertas** (media/baja prioridad):
+- Árbol de habilidades (cuántas por elemento, costos, dependencias)
+- Lobby timeout y ready check
+- HP base y scaling por nivel
 
 ---
 
@@ -268,10 +381,10 @@ class_name PelotitaData extends Resource
 @export var derrotas: int = 0
 ```
 
-**Flujo de Creación de Pelotita** (Locked):
+**Flujo de Creación de Pelotita** ✅ **COMPLETAMENTE LOCKED**:
 
 **Input del jugador**:
-- ✅ **Nombre/nickname** (único input requerido)
+- ✅ **Nombre/nickname** (único input requerido, 3-16 caracteres)
 - ❌ **NO elige**: stats, color, elemento, apariencia
 
 **Proceso automático del sistema**:
@@ -510,16 +623,39 @@ func process_mode(delta: float) -> void:
     pass  # Lógica por frame específica del modo
 ```
 
-**Ejemplo concreto: DueloPorVida**
+**Ejemplo concreto: DueloPorVida** ✅ **LOCKED**
 
 ```gdscript
 class_name DueloPorVida extends Mode
 
+const MATCH_DURATION: float = 180.0  # ✅ LOCKED: 3:00 minutos (180 segundos)
+
+var match_timer: float = 0.0
+
 func check_victory_conditions(players: Array[Player]) -> int:
+    # Victoria por eliminación
     var alive_players = players.filter(func(p): return p.hp_current > 0)
     if alive_players.size() == 1:
         return alive_players[0].peer_id
-    return -1  # Empate o aún no hay ganador
+    
+    # ✅ LOCKED: Victoria por timeout (3:00)
+    if match_timer >= MATCH_DURATION:
+        # Gana el jugador con mayor HP actual
+        var player_1 = players[0]
+        var player_2 = players[1]
+        
+        if player_1.hp_current > player_2.hp_current:
+            return player_1.peer_id
+        elif player_2.hp_current > player_1.hp_current:
+            return player_2.peer_id
+        else:
+            # HP igual = empate
+            return 0  # Código especial para empate
+    
+    return -1  # Match continúa
+
+func process_mode(delta: float):
+    match_timer += delta
 
 func get_spawn_positions() -> Array[Vector2]:
     return [
@@ -2479,9 +2615,14 @@ Placeholder: 4 disparos idénticos en mecánica, diferenciados solo por color.
 
 ### 10.2 Modos de Juego (Locked + TBD)
 
-#### MVP (P0)
+#### MVP (P0) - ✅ **LOCKED**
 
-- **Duelo por Vida** (1v1): reducir HP rival a 0
+- **Duelo por Vida** (1v1) ✅ **LOCKED**:
+  - ✅ Victoria por eliminación: reducir HP rival a 0
+  - ✅ **Timer de 3:00 minutos** (180 segundos)
+  - ✅ **Victoria por timeout**: Al acabar el tiempo, gana el jugador con **mayor HP actual**
+  - ✅ **Empate**: Si ambos tienen el **mismo HP** al acabar el tiempo = empate (sin ganador)
+  - **Estado**: ✅ CERRADO - Timer y condiciones de victoria completamente definidas
 
 #### Post-MVP (P1-P2)
 
@@ -2591,13 +2732,14 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 
 ### Alta Prioridad (Bloquean MVP)
 
-1. **XP y Level-Up** ✅ **LOCKED (provisional, sujeto a balance)**
+1. **XP y Level-Up** ✅ **COMPLETAMENTE LOCKED**
    - ✅ **Locked**: Curva exponencial `100 × 1.5^(n-1)`; level cap inicial = 10 (expansiones +10 por tier)
    - ✅ **Locked**: Fórmula de XP por diferencia de niveles (base 25, ±5 por diff, rango 5-65)
    - ✅ **Locked**: Derrota = 0 XP en MVP
    - ⚠️ **Balance**: Valores son provisionales y se ajustarán en playtesting
    - ⛔ **Out of MVP**: XP por participación (daño, tiempo)
    - **Impacto**: Sistema completo de progresión definido, listo para implementar
+   - **Estado**: ✅ CERRADO
 
 2. **Árbol de Habilidades (Skill Tree)**
    - ¿Cuántas habilidades por elemento en MVP? (sugerencia: 4-6 cada uno = 16-24 total)
@@ -2612,17 +2754,21 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ¿Ready check o auto-start cuando ambos conectan?
    - **Impacto**: Flujo de usuario roto si no está claro
 
-4. **Desconexión en Match**
-   - ¿Qué pasa si un jugador se desconecta mid-match?
+4. **Desconexión en Match** ⚠️ **ABIERTO**
+   - ⚠️ **Pendiente de decisión**: ¿Qué pasa si un jugador se desconecta mid-match?
      - Opción A: match termina, desconectado pierde
      - Opción B: pausa 10s para reconectar
      - Opción C: AI toma control temporalmente
    - **Impacto**: Experiencia de usuario muy mala sin manejo de desconexión
+   - **Estado**: ⚠️ ABIERTO - Requiere decisión
 
-5. **Múltiples Pelotitas** ✅ **LOCKED**
+5. **Múltiples Pelotitas** ✅ **COMPLETAMENTE LOCKED**
    - ✅ **Locked**: Límite gratuito de **3 pelotitas** en MVP
+   - ✅ **Locked**: Borrado manual requerido para liberar espacio (doble confirmación)
+   - ✅ **Locked**: Selección obligatoria de 1 pelotita antes de cada duelo
    - ⛔ **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
    - **Impacto**: UI debe mostrar lista de hasta 3 pelotitas, diseño compacto
+   - **Estado**: ✅ CERRADO
 
 ---
 
@@ -2638,11 +2784,12 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - 🔮 **Futuro**: Habilidades pasivas podrán modificar masa temporalmente (ej: "+20% masa por 5s")
    - **Impacto**: Simplifica balance de física y colisiones en MVP
 
-8. **Cooldowns y Recursos** ✅ **LOCKED**
-   - ✅ **Solo cooldowns fijos por habilidad** (NO hay sistema de mana/energía)
+8. **Cooldowns y Recursos** ✅ **COMPLETAMENTE LOCKED**
+   - ✅ **Solo cooldowns fijos por habilidad** (NO hay sistema de mana/energía en ningún momento)
    - ✅ **Disparo básico**: 1.0s cooldown (provisional, sujeto a balance)
    - ⚠️ **Habilidades avanzadas TBD**: cooldowns intermedios (~3-5s) y ultimates (~10-15s) por definir
    - **Impacto**: Ritmo de combate simple y directo, sin gestión de recursos
+   - **Estado**: ✅ CERRADO - Sin mana/energía, solo cooldowns
 
 9. **Mapa y Obstáculos** ✅ **COMPLETAMENTE LOCKED**
    - ✅ Tamaño 1920×1080 suficiente para MVP
@@ -2985,6 +3132,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. Disconnect behavior marcado como abierto. |
 
 ---
 
