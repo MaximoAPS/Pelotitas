@@ -19,7 +19,7 @@ func _register_default_modes() -> void:
 	# register_mode(EquipoDeathmatch.new())
 
 
-func register_mode(mode: Mode) -> void:
+func register_mode(mode) -> void:  # Mode type
 	if mode.mode_id.is_empty():
 		push_error("[ModeRegistry] Modo sin ID válido")
 		return

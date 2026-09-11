@@ -27,7 +27,7 @@ var traveled_time: float = 0.0
 
 # Referencia a la habilidad que spawneó este proyectil (para triggers)
 var source_ability: UsableAbility = null
-var source_player: Player = null
+var source_player = null  # Player type - untyped to avoid circular dependency
 
 
 func _ready() -> void:
@@ -81,7 +81,7 @@ func _on_area_entered(area: Area2D) -> void:
 	pass
 
 
-func initialize(spawn_pos: Vector2, spawn_dir: Vector2, owner_peer_id: int, ataque_stat: int = 10, ability: UsableAbility = null, player: Player = null) -> void:
+func initialize(spawn_pos: Vector2, spawn_dir: Vector2, owner_peer_id: int, ataque_stat: int = 10, ability: UsableAbility = null, player = null) -> void:  # player is Player type
 	position = spawn_pos
 	direction = spawn_dir.normalized()
 	owner_id = owner_peer_id
