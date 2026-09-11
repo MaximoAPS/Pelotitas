@@ -2469,6 +2469,12 @@ Placeholder: 4 disparos idénticos en mecánica, diferenciados solo por color.
 - ✅ Spawn points simétricos (fairness)
 - ⚠️ **Interacción proyectil vs obstáculo**: TBD (ver sección 6.3 para opciones A/B/C/D)
 
+**Interacción con gameplay** (Locked):
+- ✅ Obstáculos bloquean **movimiento de jugadores** (no se puede atravesar)
+- ✅ Obstáculos bloquean **proyectiles** (proyectil desaparece al impactar)
+- ✅ Cover efectivo: esconderse detrás protege de proyectiles enemigos
+- ⚠️ VFX de impacto proyectil-obstáculo aún TBD (decisión visual)
+
 **Único mapa en MVP**: Por simplicidad, solo un mapa bien balanceado para Duelo por Vida
 
 #### Post-MVP (P1-P2)
@@ -2592,21 +2598,19 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - Cooldowns por defecto: ¿1s básicas, 5s intermedias, 15s ultimates?
    - **Impacto**: Ritmo de combate
 
-9. **Mapa y Obstáculos** ✅ **PARCIALMENTE LOCKED**
-   - ✅ **Locked**: Tamaño 1920×1080 suficiente para MVP
-   - ✅ **Locked**: Primer mapa incluye 4-6 obstáculos fijos (pilares)
-   - ⚠️ **TBD**: Interacción proyectil vs obstáculo (explotan / rebotan / atraviesan / mixto)
-   - **Impacto**: Táctica de combate (cover, línea de sight)
+9. **Mapa y Obstáculos** ✅ **LOCKED**
+   - ✅ Tamaño 1920×1080 suficiente para MVP
+   - ✅ Primer mapa incluye 4-6 obstáculos fijos (pilares)
+   - ✅ Obstáculos bloquean jugadores Y proyectiles (cover efectivo)
+   - ⚠️ **Solo VFX TBD**: Efecto visual al impactar (no afecta gameplay)
+   - **Impacto**: Táctica de combate, posicionamiento crítico
 
-10. **Proyectiles vs Obstáculos** ⚠️ **TBD CRÍTICO**
-    - ✅ Mapa MVP tiene 4-6 obstáculos fijos (locked)
-    - ❓ **¿Qué pasa cuando proyectil impacta obstáculo?**
-      - **Opción A**: Explotan y desaparecen (cover efectivo)
-      - **Opción B**: Rebotan / ricochet (skill shots avanzados)
-      - **Opción C**: Atraviesan (obstáculos solo bloquean jugadores)
-      - **Opción D**: Mixto (según tipo de habilidad)
-    - **Impacto**: Core gameplay, balance de cover vs movilidad
-    - **Urgencia**: Alta (necesario antes de implementar proyectiles avanzados)
+10. **Proyectiles vs Obstáculos** ✅ **LOCKED**
+    - ✅ Mapa MVP tiene 4-6 obstáculos fijos
+    - ✅ **Obstáculos bloquean AMBOS**: jugadores Y proyectiles
+    - ✅ Proyectiles desaparecen al impactar obstáculo (cover efectivo)
+    - ⚠️ **VFX de impacto TBD**: decisión visual (explosión pequeña / chispa / disipación)
+    - **Impacto**: Core gameplay confirmado - posicionamiento táctico es crítico
 
 11. **AoE y Explosiones**
     - ¿Los disparos básicos explotan con AoE o solo daño single-target?

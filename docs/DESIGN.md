@@ -61,8 +61,9 @@ Las siguientes decisiones están **firmemente locked** para MVP:
 **Primer mapa**: "Arena de Pilares"
 - Arena rectangular 1920×1080 con paredes perimetrales
 - **4-6 obstáculos fijos** (pilares/bloqueadores) distribuidos simétricamente
+- **Obstáculos bloquean**: jugadores Y proyectiles (cover efectivo)
 - Propósito: cover táctico y líneas de sight interesantes
-- ⚠️ **TBD**: Interacción proyectil vs obstáculo (explotan/rebotan/atraviesan)
+- VFX de impacto proyectil-obstáculo: TBD (solo visual)
 
 ### Controles Móviles
 
