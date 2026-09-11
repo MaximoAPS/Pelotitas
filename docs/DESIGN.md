@@ -82,6 +82,15 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 
 ### Progresión y Level-Up
 
+**Fuente de XP**:
+- **Primaria**: victorias en duelos
+- **Out of MVP**: XP por perder o participación (si se implementa post-MVP, cantidad menor)
+
+**Level Cap**:
+- **Tier 1 (MVP)**: nivel 0-10
+- **Expansiones futuras**: +10 niveles por tier (20, 30, 40, etc.) con nuevo contenido (habilidades, modos, mapas)
+- XP ganada al alcanzar cap se guarda para el próximo tier
+
 **Al subir de nivel, se otorgan**:
 1. **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed
    - Distribución aleatoria (enteros no negativos que suman exactamente 10)
@@ -94,6 +103,11 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 
 - **3 habilidades usables** (activables con botones)
 - **1 habilidad pasiva** (efecto automático permanente)
+
+### Roster de Pelotitas
+
+- **MVP**: 3-5 pelotitas gratis (decidir entre 3 o 5, pick one antes de launch)
+- **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
 
 ### Disparo Básico Elemental
 
@@ -162,14 +176,12 @@ Estas son **preguntas abiertas** que aún no tienen respuesta definitiva. **NO i
 
 ### Sistema de Experiencia
 
-- ¿Fuentes de XP? (victoria, derrota, participación, etc.)
-- ¿Cantidades de XP otorgadas por cada fuente?
-- ¿Nivel máximo (cap)?
+- ¿Cantidades exactas de XP por victoria? (placeholder: 50-100 XP)
+- ¿Curva de XP por nivel? (lineal, exponencial, escalonada)
 
-### Pelotitas por Cuenta
+### Flujo de Creación
 
-- ¿Cuántas pelotitas puede tener un jugador por cuenta/dispositivo?
-- ¿Cómo es el flujo de creación de pelotita?
+- ¿Cómo es el flujo exacto de creación de pelotita? (UI, pasos, confirmación)
 
 ### Moneda Soft
 

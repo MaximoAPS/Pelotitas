@@ -95,7 +95,7 @@ Pantalla Resultado (ganador, XP ganada, level-up?)
 ```
 Pelotita nivel N
    ↓
-Jugar duelos → Ganar XP (fuentes TBD)
+Jugar duelos → Ganar XP (por victoria - fuente principal)
    ↓
 Alcanzar umbral XP → Level Up
    ↓
@@ -105,7 +105,9 @@ Recibir:
    ↓
 Desbloquear/mejorar habilidades con puntos elementales
    ↓
-Repetir hasta nivel máximo (TBD)
+Repetir hasta nivel máximo (cap inicial: 10)
+   ↓
+Esperar expansión de contenido (+10 niveles por tier)
 ```
 
 ### Loop de Match (micro, 1-3 min)
@@ -229,8 +231,8 @@ class_name PelotitaData extends Resource
 @export var uuid: String = ""  # Generado al crear
 
 ## Progresión
-@export var level: int = 0
-@export var xp: int = 0
+@export var level: int = 0          # Nivel actual (0-10 en MVP, cap inicial)
+@export var xp: int = 0             # XP acumulada para próximo nivel
 
 ## Stats de Combate (base)
 @export var ataque: int = 50        # Base nivel 0
@@ -697,18 +699,23 @@ Después de 5 level-ups, "Chispa" podría tener:
 - ATK=80, DEF=60, SPD=70 (distribucion aleatoria acumulada)
 - Puntos: Fuego=2, Agua=1, Tierra=0, Aire=2 (según sorteos de afinidad)
 
-#### XP y Thresholds (TBD - Hay que definir)
+#### XP y Thresholds (Locked + TBD)
 
-**Preguntas abiertas**:
-- ¿Cuánto XP otorga ganar un duelo?
-- ¿Hay XP por perder? ¿Cuánto?
-- ¿XP por participación (tiempo en match, daño infligido)?
-- ¿Curva de XP por nivel? (lineal, exponencial, escalonada)
+**Locked**:
+- **Fuente principal de XP**: ganar duelos (victoria)
+- **Level cap inicial**: 10
+  - Futuras expansiones subirán el cap en incrementos de +10 (nivel 20, 30, 40, etc.)
+  - Cada expansión viene con nuevo contenido: habilidades, modos, mapas
+- **Curva de XP**: TBD - debe definirse curva específica (lineal, exponencial, escalonada)
   - Ejemplo lineal: nivel N requiere `100 + N × 50` XP
   - Ejemplo exponencial: nivel N requiere `100 × 1.5^N` XP
-- ¿Nivel máximo (cap)? Sugerencia: 30-50 para MVP
 
-**Placeholder para implementación**:
+**Out of MVP / TBD**:
+- ¿XP por perder duelo? (si se implementa, será cantidad menor)
+- ¿XP por participación? (tiempo en match, daño infligido)
+- Cantidades exactas de XP por victoria (placeholder: 50-100 XP)
+
+**Implementación placeholder**:
 ```gdscript
 # scripts/core/progression.gd (Autoload)
 func get_xp_required_for_level(level: int) -> int:
@@ -842,6 +849,102 @@ Invocar Salamandra (Fire Summon)
 ```
 
 **UI de Skill Tree**: Pantalla separada accesible desde menú, muestra árbol visual con dependencias (nodos conectados), indica qué habilidades están desbloqueadas/bloqueadas y cuántos puntos quedan disponibles.
+
+---
+
+### 5.6 Sistema de Caps de Nivel por Tiers (Locked)
+
+**Filosofía**: La progresión se expande en tiers para mantener el contenido fresco y gestionable.
+
+#### Tier System
+
+| Tier | Level Cap | Contenido Asociado | Estado |
+|------|-----------|-------------------|--------|
+| **Tier 1 (MVP)** | Nivel 0-10 | 4 elementos × 4-6 habilidades básicas/intermedias, Duelo por Vida | MVP actual |
+| **Tier 2** | Nivel 11-20 | +2-3 habilidades avanzadas por elemento, 1-2 modos nuevos, 2 mapas | Post-MVP |
+| **Tier 3** | Nivel 21-30 | Ultimates elementales, 2 modos adicionales, 3 mapas | Expansión 1 |
+| **Tier 4+** | +10 por tier | Elementos híbridos, modos complejos (Battle Royale), contenido premium | Largo plazo |
+
+#### Mecánica de Level Cap
+
+**MVP (Tier 1)**:
+```gdscript
+const MAX_LEVEL_TIER_1: int = 10
+
+func can_level_up(pelotita: PelotitaData) -> bool:
+    if pelotita.level >= MAX_LEVEL_TIER_1:
+        return false  # Cap alcanzado, necesita expansión
+    return pelotita.xp >= get_xp_required_for_level(pelotita.level + 1)
+```
+
+**UI cuando se alcanza cap**:
+```
+┌─────────────────────────────────┐
+│      🏆 NIVEL MÁXIMO 🏆         │
+├─────────────────────────────────┤
+│  ¡Chispa alcanzó nivel 10!      │
+│                                 │
+│  Has completado Tier 1.         │
+│                                 │
+│  XP acumulada: 250 XP           │
+│  (guardada para próxima         │
+│   expansión)                    │
+│                                 │
+│  Próximamente: Tier 2           │
+│  • Nivel cap → 20               │
+│  • Habilidades avanzadas        │
+│  • Nuevos modos de juego        │
+│                                 │
+│  [Continuar]                    │
+└─────────────────────────────────┘
+```
+
+**Ventajas del sistema de tiers**:
+- **Control de balanceo**: balance inicial con 10 niveles es más manejable que 50+
+- **Contenido gestionable**: crear 16-24 habilidades para Tier 1 es factible; 100+ no
+- **Retención de jugadores**: cada tier es un evento / expansión que trae jugadores de vuelta
+- **XP acumulada**: jugadores que alcanzan cap siguen ganando XP que se aplicará al desbloquear Tier 2
+
+#### Implementación Técnica
+
+```gdscript
+# scripts/core/progression.gd
+
+# Constantes de tier (se actualizan con cada expansión)
+const CURRENT_TIER: int = 1
+const TIER_LEVEL_CAPS: Dictionary = {
+    1: 10,
+    2: 20,
+    3: 30,
+    # Futuras expansiones agregan más tiers
+}
+
+func get_max_level() -> int:
+    return TIER_LEVEL_CAPS.get(CURRENT_TIER, 10)
+
+func award_xp(pelotita: PelotitaData, amount: int) -> Dictionary:
+    pelotita.xp += amount
+    var level_ups = []
+    var capped = false
+    
+    while pelotita.xp >= get_xp_required_for_level(pelotita.level + 1):
+        if pelotita.level >= get_max_level():
+            capped = true
+            break  # No subir más, guardar XP para expansión
+        
+        pelotita.xp -= get_xp_required_for_level(pelotita.level + 1)
+        pelotita.level += 1
+        apply_level_up(pelotita)
+        level_ups.append(pelotita.level)
+    
+    return {
+        "level_ups": level_ups,
+        "capped": capped,
+        "overflow_xp": pelotita.xp if capped else 0
+    }
+```
+
+**Nota importante**: XP ganada después de alcanzar el cap NO se pierde — se guarda en `pelotita.xp` y se aplicará automáticamente cuando se desbloquee el próximo tier.
 
 ---
 
@@ -1442,9 +1545,14 @@ user://
 ├── pelotitas/
 │   ├── pelotita_001.tres     (PelotitaData Resource)
 │   ├── pelotita_002.tres
-│   └── ...
+│   ├── pelotita_003.tres
+│   └── (máximo 3-5 en MVP, decidir cuál)
 └── stats.json                (estadísticas globales, futuro)
 ```
+
+**Límite de pelotitas** (Locked):
+- **MVP**: 3-5 pelotitas gratis (decidir entre 3 o 5, pick one antes de launch)
+- **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
 
 #### Save/Load de Pelotita
 
@@ -1998,12 +2106,12 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 
 ### Alta Prioridad (Bloquean MVP)
 
-1. **XP y Level-Up**
-   - ¿Cuánto XP otorga ganar un duelo? (sugerencia: 50-100)
-   - ¿Cuánto XP otorga perder? (sugerencia: 20-30)
-   - ¿Curva de XP por nivel? (lineal, exponencial, escalones)
-   - ¿Nivel máximo? (sugerencia: 30-50 para MVP)
-   - **Impacto**: Sin esto, no hay progresión funcional
+1. **XP y Level-Up** ✅ **PARCIALMENTE LOCKED**
+   - ✅ **Locked**: XP se gana principalmente por victorias; level cap inicial = 10 (expansiones +10 por tier)
+   - ❓ **TBD**: ¿Cuánto XP otorga ganar un duelo? (sugerencia: 50-100)
+   - ❓ **TBD**: ¿Curva de XP por nivel? (lineal, exponencial, escalones)
+   - ⛔ **Out of MVP**: XP por perder o participación
+   - **Impacto**: Sin cantidades específicas, balance de progresión es difícil de testear
 
 2. **Árbol de Habilidades (Skill Tree)**
    - ¿Cuántas habilidades por elemento en MVP? (sugerencia: 4-6 cada uno = 16-24 total)
@@ -2025,9 +2133,9 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
      - Opción C: AI toma control temporalmente
    - **Impacto**: Experiencia de usuario muy mala sin manejo de desconexión
 
-5. **Múltiples Pelotitas**
-   - ¿Cuántas pelotitas puede crear un jugador? (sugerencia: 3-5 en MVP)
-   - ¿Costo/restricción para crear más? (sugerencia: gratis en MVP, límite fijo)
+5. **Múltiples Pelotitas** ✅ **LOCKED**
+   - ✅ **Locked**: Límite gratuito de **3 o 5 pelotitas** (MVP: decidir entre 3 o 5, pick one)
+   - ⛔ **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
    - **Impacto**: Afecta diseño de UI (lista de pelotitas, selección)
 
 ---
