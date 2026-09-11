@@ -89,14 +89,20 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 
 ### Progresión y Level-Up
 
-**Fuente de XP**:
-- **Primaria**: victorias en duelos
-- **Out of MVP**: XP por perder o participación (si se implementa post-MVP, cantidad menor)
+**Fuente de XP y Cantidades** (provisional - sujeto a balance):
+- **Victoria**: +50 XP
+- **Derrota**: 0 XP en MVP
+- **Curva de XP**: Nivel N requiere N × 100 XP
+  - Nivel 1: 100 XP, Nivel 2: 200 XP, Nivel 3: 300 XP, etc.
+  - Total para nivel 10: 5500 XP (110 victorias)
+- **Out of MVP**: XP por participación (daño, tiempo) - no implementado en MVP
 
 **Level Cap**:
 - **Tier 1 (MVP)**: nivel 0-10
 - **Expansiones futuras**: +10 niveles por tier (20, 30, 40, etc.) con nuevo contenido (habilidades, modos, mapas)
 - XP ganada al alcanzar cap se guarda para el próximo tier
+
+⚠️ **Nota**: Valores de XP son provisionales y se ajustarán durante playtesting.
 
 **Al subir de nivel, se otorgan**:
 1. **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed
@@ -181,10 +187,11 @@ Estas son **preguntas abiertas** que aún no tienen respuesta definitiva. **NO i
 
 - ¿Valores iniciales de ATK/DEF/Speed/masa en nivel 1?
 
-### Sistema de Experiencia
+### Balance y Ajustes
 
-- ¿Cantidades exactas de XP por victoria? (placeholder: 50-100 XP)
-- ¿Curva de XP por nivel? (lineal, exponencial, escalonada)
+- ¿Los valores provisionales de XP (50 por victoria, N×100 por nivel) necesitan ajustes?
+- ¿La progresión se siente muy lenta o muy rápida en playtesting?
+- ¿Considerar XP por derrota post-MVP para mejorar retención?
 
 ### Flujo de Creación
 

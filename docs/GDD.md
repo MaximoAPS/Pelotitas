@@ -706,33 +706,69 @@ Después de 5 level-ups, "Chispa" podría tener:
 - **Level cap inicial**: 10
   - Futuras expansiones subirán el cap en incrementos de +10 (nivel 20, 30, 40, etc.)
   - Cada expansión viene con nuevo contenido: habilidades, modos, mapas
-- **Curva de XP**: TBD - debe definirse curva específica (lineal, exponencial, escalonada)
-  - Ejemplo lineal: nivel N requiere `100 + N × 50` XP
-  - Ejemplo exponencial: nivel N requiere `100 × 1.5^N` XP
 
-**Out of MVP / TBD**:
-- ¿XP por perder duelo? (si se implementa, será cantidad menor)
-- ¿XP por participación? (tiempo en match, daño infligido)
-- Cantidades exactas de XP por victoria (placeholder: 50-100 XP)
+**Provisional (sujeto a balance)**:
+- **XP por victoria**: +50 XP
+- **XP por derrota**: 0 XP (en MVP)
+- **Curva de XP**: Lineal simple
+  - Nivel N requiere `N × 100` XP desde nivel N-1
+  - Nivel 1: 100 XP total
+  - Nivel 2: 200 XP adicionales (300 XP acumulada)
+  - Nivel 3: 300 XP adicionales (600 XP acumulada)
+  - ...
+  - Nivel 10: 1000 XP adicionales (5500 XP acumulada total)
 
-**Implementación placeholder**:
+**Ejemplo de progresión**:
+```
+Pelotita nueva (nivel 0):
+  Duelo 1: Victoria → +50 XP (50/100) 
+  Duelo 2: Victoria → +50 XP (100/100) → LEVEL UP a nivel 1
+  Duelo 3: Victoria → +50 XP (50/200)
+  Duelo 4: Victoria → +50 XP (100/200)
+  Duelo 5: Derrota → +0 XP (100/200)
+  Duelo 6: Victoria → +50 XP (150/200)
+  Duelo 7: Victoria → +50 XP (200/200) → LEVEL UP a nivel 2
+```
+
+**Tiempo estimado para nivel 10**:
+- XP total necesaria: 5500 XP
+- Victorias necesarias: 110 duelos ganados
+- Con 50% win rate: ~220 duelos totales
+
+⚠️ **Nota**: Estos valores son provisionales y se ajustarán durante playtesting y balance.
+
+**Out of MVP**:
+- XP por participación (tiempo en match, daño infligido)
+- XP por derrota (si se implementa post-MVP, será cantidad menor que victoria)
+
+**Implementación**:
 ```gdscript
 # scripts/core/progression.gd (Autoload)
-func get_xp_required_for_level(level: int) -> int:
-    # TODO: definir curva
-    return 100 + level * 50  # Placeholder lineal
 
-func award_xp(pelotita: PelotitaData, amount: int) -> bool:
-    pelotita.xp += amount
-    var level_up_occurred = false
+# Valores provisionales (sujeto a balance)
+const XP_PER_WIN: int = 50
+const XP_PER_LOSS: int = 0  # MVP: sin XP por derrotas
+
+func get_xp_required_for_level(level: int) -> int:
+    # Curva lineal simple: nivel N requiere N × 100 XP
+    return level * 100
+
+func award_xp_for_match(pelotita: PelotitaData, won: bool) -> Dictionary:
+    var xp_gained = XP_PER_WIN if won else XP_PER_LOSS
+    pelotita.xp += xp_gained
     
-    while pelotita.xp >= get_xp_required_for_level(pelotita.level + 1):
+    var level_ups = []
+    while pelotita.level < get_max_level() and pelotita.xp >= get_xp_required_for_level(pelotita.level + 1):
         pelotita.xp -= get_xp_required_for_level(pelotita.level + 1)
         pelotita.level += 1
         apply_level_up(pelotita)
-        level_up_occurred = true
+        level_ups.append(pelotita.level)
     
-    return level_up_occurred
+    return {
+        "xp_gained": xp_gained,
+        "level_ups": level_ups,
+        "capped": pelotita.level >= get_max_level()
+    }
 ```
 
 ### 5.4 Sistema de Afinidad Elemental (Locked)
@@ -2109,12 +2145,12 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 
 ### Alta Prioridad (Bloquean MVP)
 
-1. **XP y Level-Up** ✅ **PARCIALMENTE LOCKED**
-   - ✅ **Locked**: XP se gana principalmente por victorias; level cap inicial = 10 (expansiones +10 por tier)
-   - ❓ **TBD**: ¿Cuánto XP otorga ganar un duelo? (sugerencia: 50-100)
-   - ❓ **TBD**: ¿Curva de XP por nivel? (lineal, exponencial, escalones)
-   - ⛔ **Out of MVP**: XP por perder o participación
-   - **Impacto**: Sin cantidades específicas, balance de progresión es difícil de testear
+1. **XP y Level-Up** ✅ **LOCKED (valores provisionales sujetos a balance)**
+   - ✅ **Locked**: XP por victorias; level cap inicial = 10 (expansiones +10 por tier)
+   - ✅ **Provisional**: Victoria = +50 XP; Derrota = 0 XP; Curva: nivel N requiere N×100 XP
+   - ⚠️ **Balance**: Valores se ajustarán durante playtesting
+   - ⛔ **Out of MVP**: XP por participación (daño, tiempo)
+   - **Impacto**: Con valores provisionales, se puede comenzar balance y testing
 
 2. **Árbol de Habilidades (Skill Tree)**
    - ¿Cuántas habilidades por elemento en MVP? (sugerencia: 4-6 cada uno = 16-24 total)
