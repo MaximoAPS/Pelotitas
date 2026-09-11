@@ -15,7 +15,7 @@ func get_ability_type() -> String:
 
 
 ## Intenta usar la habilidad con dirección de apuntado
-func try_use(caster: Player, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
+func try_use(caster, aim_direction: Vector2 = Vector2.RIGHT) -> bool:  # caster is Player type
 	if not can_use():
 		return false
 	
@@ -38,7 +38,7 @@ func get_cooldown_remaining() -> float:
 
 ## Override en habilidades concretas
 ## aim_direction: dirección normalizada en la que el jugador apuntó (desde press-hold-drag-release)
-func execute(caster: Player, aim_direction: Vector2) -> void:
+func execute(caster, aim_direction: Vector2) -> void:  # caster is Player type
 	push_warning("[UsableAbility] execute() no implementado para %s" % ability_id)
 	print("[UsableAbility] Dirección de apuntado: %v" % aim_direction)
 	# TODO: Implementar en subclases usando aim_direction:
@@ -53,11 +53,11 @@ func execute(caster: Player, aim_direction: Vector2) -> void:
 ## ========================================
 
 ## Trigger: Al activar/usar la habilidad (después de pasar cooldown)
-func on_activate(caster: Player, aim_direction: Vector2) -> void:
+func on_activate(caster, aim_direction: Vector2) -> void:  # caster is Player type
 	pass
 
 
 ## Trigger: Cuando un proyectil de esta habilidad impacta enemigo
 ## Llamado desde el proyectil mismo
-func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
+func on_hit_enemy(caster, target, projectile: Node2D) -> void:  # caster and target are Player types
 	pass

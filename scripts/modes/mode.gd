@@ -37,7 +37,7 @@ func check_victory_conditions() -> void:
 
 
 ## Maneja la muerte de un jugador
-func on_player_death(player: Player) -> void:
+func on_player_death(player) -> void:  # Player type
 	print("[Mode] Jugador murió: %s" % player.pelotita_id)
 	check_victory_conditions()
 
@@ -54,10 +54,10 @@ func get_spawn_positions() -> Array[Vector2]:
 
 
 ## Registra un jugador en el modo
-func register_player(player: Player) -> void:
+func register_player(player) -> void:  # Player type
 	active_players.append(player)
 	player.died.connect(_on_player_died.bind(player))
 
 
-func _on_player_died(player: Player) -> void:
+func _on_player_died(player) -> void:  # Player type
 	on_player_death(player)

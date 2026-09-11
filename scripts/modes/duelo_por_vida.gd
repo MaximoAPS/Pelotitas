@@ -53,7 +53,7 @@ func get_spawn_positions() -> Array[Vector2]:
 	]
 
 
-func on_player_death(player: Player) -> void:
+func on_player_death(player) -> void:  # Player type
 	super.on_player_death(player)
 	# En este modo, cualquier muerte puede significar victoria
 	check_victory_conditions()

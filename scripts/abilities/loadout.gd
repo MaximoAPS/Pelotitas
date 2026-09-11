@@ -7,7 +7,7 @@ const MAX_PASSIVE_ABILITIES = 1
 
 var usable_abilities  # Completely untyped variable
 var passive_ability: PassiveAbility = null
-var owner_player: Player = null
+var owner_player = null  # Player type - untyped to avoid circular dependency
 
 
 func _init() -> void:
@@ -92,7 +92,7 @@ func trigger_on_match_start() -> void:
 
 
 ## Trigger: Al colisionar con otro jugador
-func trigger_on_collide_player(self_player: Player, other_player: Player) -> void:
+func trigger_on_collide_player(self_player, other_player) -> void:  # Player types
 	for ability in usable_abilities:
 		if ability:
 			ability.on_collide_player(self_player, other_player)
@@ -102,7 +102,7 @@ func trigger_on_collide_player(self_player: Player, other_player: Player) -> voi
 
 
 ## Trigger: Al colisionar con pared
-func trigger_on_collide_wall(player: Player, impact_point: Vector2, wall_normal: Vector2) -> void:
+func trigger_on_collide_wall(player, impact_point: Vector2, wall_normal: Vector2) -> void:  # player is Player type
 	for ability in usable_abilities:
 		if ability:
 			ability.on_collide_wall(player, impact_point, wall_normal)
