@@ -6,6 +6,9 @@ extends Node
 ## - Calcular subidas de nivel y puntos de habilidad
 ## - Aplicar sistema de afinidad (pesos elementales secretos)
 ## - Mantener y persistir árboles de habilidades
+##
+## ⚠️ FUTURO: Migrar de Dictionary a PelotitaData Resource
+## Ver scripts/progression/pelotita_data.gd para versión tipada
 
 signal level_up(pelotita_id: String, new_level: int, skill_point_element: Element)
 signal skill_learned(pelotita_id: String, skill_id: String)

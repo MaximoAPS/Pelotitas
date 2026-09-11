@@ -6,12 +6,19 @@ class_name Projectile
 ## - Movimiento en dirección fija
 ## - Colisión y daño
 ## - Autoridad de red (solo el servidor simula física)
+##
+## ⚠️ FUTURO: Este sistema será reemplazado gradualmente por BallBody + antimatter
+## Ver docs/DESIGN.md sección "Visión: pelotas, masa y trayectorias"
+## BallBody implementará:
+## - Colisiones antimateria (masas se cancelan)
+## - Trayectorias pluggables (RectilinearTrajectory, ChaseTarget, etc.)
+## - Física basada en fuerzas en lugar de velocity directa
 
-@export var speed: float = 300.0
+@export var speed: float = 420.0
 @export var base_damage: int = 10
 @export var lifetime: float = 5.0
 @export var pierce: bool = false
-@export var knockback_strength: float = 150.0
+@export var knockback_strength: float = 280.0
 
 var direction: Vector2 = Vector2.RIGHT
 var owner_id: int = -1
@@ -29,8 +36,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not Net.has_authority(self):
-		return  # Solo el authority mueve proyectiles
+	# Offline mode: allow movement without authority if no multiplayer peer
+	var offline_mode = multiplayer.multiplayer_peer == null
+	if not offline_mode and not Net.has_authority(self):
+		return  # Solo el authority mueve proyectiles (excepto offline)
 	
 	position += direction * speed * delta
 	traveled_time += delta
@@ -40,10 +49,17 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
-	if not Net.has_authority(self):
+	# Offline mode: allow collision without authority
+	var offline_mode = multiplayer.multiplayer_peer == null
+	if not offline_mode and not Net.has_authority(self):
 		return
 	
-	if body is Player and body.get_multiplayer_authority() != owner_id:
+	# Don't damage source_player
+	if body is Player and body != source_player:
+		# Also check multiplayer authority for online mode
+		if not offline_mode and body.get_multiplayer_authority() == owner_id:
+			return
+		
 		# Calcular daño con fórmula: max(1, ataque - defensa * 0.5)
 		var final_damage = max(1, owner_ataque - body.defensa * 0.5)
 		

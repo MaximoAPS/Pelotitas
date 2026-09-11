@@ -196,9 +196,16 @@ Pelotita A (Ataque: 15) ataca a Pelotita B (Defensa: 8)
 Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
 ```
 
-#### Velocidad de Movimiento (Sistema Relativo)
+#### Velocidad de Movimiento (Sistema Relativo con Inercia)
 
-La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match. Esto garantiza que las velocidades sean proporcionales entre jugadores independientemente de los valores absolutos de sus stats.
+La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match, con física de **inercia** para movimiento fluido.
+
+**Sistema de inercia**:
+- El input del jugador define una **dirección deseada**, no velocidad instantánea
+- La pelotita **acelera** hacia la dirección deseada (tuneable: `aceleracion` ≈ 900 px/s²)
+- Sin input, se aplica **fricción** que desacelera gradualmente (tuneable: `friccion` ≈ 700 px/s²)
+- La velocidad se clampea a la **velocidad máxima** calculada del stat (`speed_m_s × PIXELS_PER_METER`)
+- Resultado: movimiento con peso e inercia, no detención/arranque instantáneos
 
 **Fórmula**:
 
@@ -567,6 +574,195 @@ Main Menu
 - Limpia todo el estado del duelo anterior
 - Garantiza spawn fresco de jugadores y proyectiles
 - Evita bugs de estado persistente
+
+---
+
+## Visión: pelotas, masa y trayectorias
+
+⚠️ **FUTURO / NO REQUERIDO PARA MVP APK ACTUAL**
+
+Esta sección documenta la visión a largo plazo del sistema de combate basado en **pelotas elementales con masa**, **colisiones de antimateria** y **trayectorias pluggables**. El modelo descrito aquí NO es parte del MVP actual, pero define la arquitectura hacia la que evolucionará el sistema de habilidades y proyectiles.
+
+### 1. Modelo de Pelotas Elementales
+
+Cada habilidad usable recibe:
+- **Jugador actual** (`Player`)
+- **Dirección de apuntado** (`Vector2`) originando desde la posición del jugador
+
+Al activarse, la habilidad **spawnea una o más pelotas elementales** con las siguientes propiedades configuradas:
+
+```gdscript
+# Propiedades de cada pelota elemental:
+- masa: float             # Masa física de la pelota
+- elemento: Elemento      # Fuego, Agua, Tierra, Aire
+- owner_team: int         # Equipo/peer_id del dueño
+- trajectory_behavior: TrajectoryBehavior  # Script de comportamiento de movimiento
+- velocidad_inicial: Vector2  # Velocidad inicial (aplicada como fuerza/impulso)
+```
+
+**Diseño clave**: Las pelotas son entidades físicas independientes del jugador que las lanzó. Pueden continuar existiendo, cambiar de tamaño, duplicarse, o interactuar con otras pelotas según su configuración.
+
+### 2. Colisiones de Antimateria
+
+Cuando dos pelotas elementales **de equipos rivales** colisionan:
+
+**Mecánica central**: Las pelotas rivales actúan como **antimateria** — sus masas se cancelan mutuamente.
+
+#### Resolución de Colisión:
+
+1. **Calcular masas efectivas** (aplicar modificadores elementales primero)
+2. **Cancelar masas**: La pelota con mayor masa efectiva sobrevive
+3. **Masa restante**: La pelota superviviente continúa con `masa_restante = masa_mayor - masa_menor`
+4. **Trayectoria**: La pelota superviviente continúa en su trayectoria original con la masa reducida
+5. **Aniquilación**: Si ambas masas son iguales, ambas pelotas se destruyen
+
+#### Ejemplo Básico:
+
+```
+Pelota A (Fuego, masa=5.0) colisiona con Pelota B (Agua, masa=3.0)
+
+Sin modificadores:
+→ Pelota A sobrevive con masa=2.0 (5.0 - 3.0)
+→ Pelota B se destruye
+→ Pelota A continúa su trayectoria original
+```
+
+### 3. Modificadores Elementales
+
+Los elementos pueden tener **ventajas de masa** en la resolución de colisiones:
+
+**Ejemplo: Agua vs Fuego**
+- Masa de agua cuenta como **×1.5** durante la cancelación
+- Después de resolver la colisión, la masa vuelve a su factor normal
+
+#### Ejemplo con Modificador:
+
+```
+Pelota Agua (masa=3.0) vs Pelota Fuego (masa=4.0)
+
+Paso 1: Aplicar modificador elemental
+  masa_efectiva_agua = 3.0 × 1.5 = 4.5
+
+Paso 2: Cancelar masas
+  masa_restante = 4.5 - 4.0 = 0.5
+
+Paso 3: Volver a factor normal
+  masa_final_agua = 0.5 / 1.5 ≈ 0.33
+
+Resultado:
+→ Pelota Agua sobrevive con masa≈0.33
+→ Pelota Fuego se destruye
+```
+
+**Matriz de ventajas elementales** (a definir):
+```
+Agua vs Fuego:   ×1.5
+Fuego vs Tierra: ×1.5
+Tierra vs Aire:  ×1.5
+Aire vs Agua:    ×1.5
+```
+
+### 4. Comportamientos de Trayectoria (Pluggable)
+
+Las pelotas NO tienen una física fija — su movimiento está determinado por **scripts de comportamiento intercambiables**:
+
+**Clase base**: `TrajectoryBehavior` (Resource o script adjunto)
+
+```gdscript
+class_name TrajectoryBehavior extends Resource
+
+## Llamado cada frame para actualizar movimiento de la pelota
+func update_movement(ball: BallBody, delta: float) -> void:
+    pass
+```
+
+#### Comportamientos Concretos (stubs para futuro):
+
+**1. `RectilinearTrajectory`**: Movimiento rectilíneo uniforme
+```gdscript
+# Pelota se mueve en línea recta a velocidad constante
+# Usado por: Disparos elementales básicos
+```
+
+**2. `ChaseTargetTrajectory`**: Perseguir jugador rival
+```gdscript
+# Pelota persigue al jugador enemigo más cercano
+# Velocidad basada en masa (más masa = más lenta)
+# Usado por: Invocaciones (summons), proyectiles teledirigidos
+```
+
+**3. `StationaryWallTrajectory`**: Estático (muro)
+```gdscript
+# Pelota permanece inmóvil en su posición de spawn
+# Bloquea/aniquila proyectiles enemigos que la impactan
+# Usado por: Muros de tierra, barreras defensivas
+```
+
+**Extensibilidad futura**:
+- `OrbitalTrajectory`: Orbita alrededor del jugador
+- `BoomerangTrajectory`: Va y vuelve
+- `SpiralTrajectory`: Espiral expandente
+- `ZigZagTrajectory`: Movimiento en zigzag
+
+### 5. Cambios Dinámicos de Pelotas (Futuro)
+
+Las pelotas pueden evolucionar durante su existencia:
+
+**Escalado de tamaño**:
+- Masa determina tamaño visual (radio ∝ sqrt(masa))
+- A medida que la pelota pierde masa en colisiones, se hace visualmente más pequeña
+
+**Duplicación temporal**:
+- Algunas habilidades pueden hacer que pelotas se dupliquen después de X segundos
+- Cada copia hereda porcentaje de la masa original
+
+**Absorción de aliados**:
+- Pelotas del mismo equipo pueden fusionarse, sumando sus masas
+
+### 6. Filosofía de Diseño: Fuerzas sobre Masas
+
+⚠️ **PRINCIPIO ARQUITECTÓNICO FUNDAMENTAL**
+
+El sistema debe preferir **aplicar fuerzas a masas** (con inercia física significativa) en lugar de **setear velocidades directamente**.
+
+**Razones**:
+1. **Inercia hace el juego táctil**: Jugadores y pelotas tienen peso, no se detienen instantáneamente
+2. **Consistencia física**: Todas las entidades responden a fuerzas de manera uniforme
+3. **Emergencia táctica**: Masas diferentes responden diferente a la misma fuerza (pelotitas pesadas son lentas pero estables)
+
+**Aplicable a**:
+- **Movimiento de pelotitas jugadoras**: Palanca aplica fuerza continua, no setea velocidad
+- **Habilidades de empuje**: Aplican impulso/fuerza, no teleport o velocidad fija
+- **Knockback**: Fuerza de retroceso escalada por masa
+- **Pelotas elementales lanzadas**: Impulso inicial, luego comportamiento de trayectoria
+
+**Ejemplo conceptual** (futuro):
+```gdscript
+# MAL (actual): Setear velocidad directamente
+player.velocity = input_direction * max_speed
+
+# BIEN (futuro): Aplicar fuerza según input
+var force = input_direction * acceleration_force
+player.apply_force(force)  # Godot integra con masa automáticamente
+```
+
+**Nota**: La transición a este modelo requiere cambios profundos en `Player` y `Projectile`. El MVP actual usa `velocity` directa por simplicidad.
+
+### 7. Integración con Sistema Actual
+
+El sistema de **ElementalShot** y **Projectile** actual es un **prototipo funcional** que será reemplazado gradualmente por el modelo de pelotas-antimateria.
+
+**Path de migración** (no implementado aún):
+1. Crear `BallBody` como reemplazo de `Projectile`
+2. Implementar resolución de colisiones antimateria en `BallBody`
+3. Refactorizar habilidades para spawnnear `BallBody` en lugar de `Projectile`
+4. Migrar física de `Player` a modelo basado en fuerzas
+5. Deprecar `Projectile` una vez que todas las habilidades usen `BallBody`
+
+**Compatibilidad durante transición**:
+- Sistema actual (`Projectile`) coexiste con sistema nuevo (`BallBody`)
+- Habilidades pueden elegir cuál usar según complejidad
+- `BallBody` puede emular comportamiento de `Projectile` con `RectilinearTrajectory` + masa fija
 
 ---
 
