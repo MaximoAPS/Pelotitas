@@ -95,10 +95,17 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
   - Nivel 10: 3849 XP (total acumulado: 11347 XP)
 - **Derrota**: 0 XP en MVP
 
-**XP por Victoria** (TBD - decidir en progreso):
-- **Opción A**: XP fija (~25 XP) - simple, predecible
-- **Opción B**: XP escalada por nivel oponente (15-30 XP) - incentiva rivales fuertes
-- ❓ MVP usará opción A o B (pendiente)
+**XP por Victoria** (Locked - provisional, sujeto a balance):
+- **Fórmula**: Basada en diferencia de niveles
+  ```
+  diff = opponent_level - your_level
+  if diff >= 0: xp = min(25 + 5*diff, 65)  # Cap en +40 bonus
+  if diff < 0: xp = max(5, 25 + 5*diff)   # Mínimo 5 XP
+  ```
+- **Base**: 25 XP (mismo nivel)
+- **Bonus**: +5 XP por cada nivel que el oponente esté arriba (cap en 65 XP)
+- **Penalización**: -5 XP por cada nivel que el oponente esté abajo (mínimo 5 XP)
+- **Estimación**: ~400-450 victorias para nivel 10 con matchmaking balanceado
 
 **Level Cap**:
 - **Tier 1 (MVP)**: nivel 0-10
@@ -190,8 +197,9 @@ Estas son **preguntas abiertas** que aún no tienen respuesta definitiva. **NO i
 
 ### Sistema de XP y Progresión
 
-- ❓ **Pendiente**: ¿MVP usa XP fija (Opción A) o escalada por oponente (Opción B)?
 - ¿La curva exponencial 1.5x se siente adecuada en playtesting?
+- ¿Los valores de XP (base 25, ±5 por diff, cap 5-65) necesitan ajustes?
+- ¿La fórmula incentiva correctamente enfrentar oponentes más fuertes?
 - ¿Considerar XP por derrota post-MVP para mejorar retención?
 
 ### Flujo de Creación

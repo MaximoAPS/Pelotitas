@@ -714,41 +714,54 @@ Después de 5 level-ups, "Chispa" podría tener:
   ```
 - **Tabla de niveles**:
 
-| Nivel | XP Requerida | XP Acumulada | Duelos (fijo 25) | Duelos (scaled) |
-|-------|--------------|--------------|------------------|-----------------|
-| 1 | 100 | 100 | 4 | 3-4 |
-| 2 | 150 | 250 | 6 | 5-6 |
-| 3 | 225 | 475 | 9 | 7-8 |
-| 4 | 338 | 813 | 14 | 10-11 |
-| 5 | 507 | 1320 | 20 | 14-16 |
-| 6 | 760 | 2080 | 30 | 21-24 |
-| 7 | 1141 | 3221 | 46 | 32-36 |
-| 8 | 1711 | 4932 | 68 | 48-54 |
-| 9 | 2566 | 7498 | 103 | 72-82 |
-| 10 | 3849 | 11347 | 154 | 108-123 |
+| Nivel | XP Requerida | XP Acumulada | Victorias (~25-30 XP avg) |
+|-------|--------------|--------------|---------------------------|
+| 1 | 100 | 100 | 4 |
+| 2 | 150 | 250 | 6 |
+| 3 | 225 | 475 | 8-9 |
+| 4 | 338 | 813 | 13-15 |
+| 5 | 507 | 1,320 | 18-21 |
+| 6 | 760 | 2,080 | 28-32 |
+| 7 | 1,141 | 3,221 | 43-50 |
+| 8 | 1,711 | 4,932 | 65-76 |
+| 9 | 2,566 | 7,498 | 100-116 |
+| 10 | 3,849 | **11,347** | **150-176** |
 
-**XP por victoria** (TBD - decidir en progreso):
+**XP por victoria** (Locked - provisional, sujeto a balance):
 
-**Opción A: XP Fija (~25 XP por victoria)**
-- Ventajas: Simple, predecible, fácil de balancear
-- Desventajas: No recompensa enfrentar oponentes más fuertes
-- Total duelos a nivel 10: ~454 victorias (908 duelos con 50% WR)
+**Fórmula basada en diferencia de niveles**:
+```gdscript
+diff = opponent_level - your_level
 
-**Opción B: XP Escalada por nivel del oponente**
-- Fórmula: `XP = base × (1 + opponent_level × 0.1)`
-  - Base = 15-20 XP
-  - vs nivel 1: 15 × 1.1 = 16.5 XP
-  - vs nivel 5: 15 × 1.5 = 22.5 XP
-  - vs nivel 10: 15 × 2.0 = 30 XP
-- Ventajas: Incentiva enfrentar rivales más fuertes, progresión más rápida en high levels
-- Desventajas: Más complejo, puede crear farming de low-levels o avoiding high-levels
-- Total duelos a nivel 10: ~340-400 victorias (variable según matchmaking)
+if diff >= 0:  # Oponente igual o más fuerte
+    xp = min(25 + 5 * diff, 65)  # Base 25, +5 por nivel, cap en 65
+else:  # Oponente más débil
+    xp = max(5, 25 + 5 * diff)  # Mínimo 5 XP
+```
 
-❓ **Pendiente de definir**: ¿MVP usa Opción A (fija) u Opción B (escalada)? Preguntar durante progreso.
+**Ejemplos** (tu nivel = 5):
+- vs nivel 5 (diff=0): 25 + 0 = **25 XP**
+- vs nivel 6 (diff=+1): 25 + 5 = **30 XP**
+- vs nivel 8 (diff=+3): 25 + 15 = **40 XP**
+- vs nivel 10 (diff=+5): 25 + 25 = **50 XP**
+- vs nivel 13+ (diff≥8): min(65, 65+) = **65 XP** (cap)
+- vs nivel 4 (diff=-1): 25 - 5 = **20 XP**
+- vs nivel 3 (diff=-2): 25 - 10 = **15 XP**
+- vs nivel 1 (diff=-4): max(5, 5) = **5 XP** (mínimo)
+
+**Características del sistema**:
+- ✅ Incentiva enfrentar oponentes más fuertes (+5 XP por nivel arriba)
+- ✅ Penaliza farming de jugadores débiles (hasta -5 XP, mínimo 5)
+- ✅ Cap en +40 bonus (65 XP máximo) evita explotación de matchmaking
+- ✅ Base de 25 XP para matchmaking justo (mismo nivel)
+- ⚠️ Valores son provisionales y se ajustarán durante balance
+
+**Estimación de progresión** (matchmaking balanceado, 50% WR):
+- Con oponentes ±1-2 niveles: promedio ~25-30 XP por victoria
+- Total victorias a nivel 10: ~400-450 victorias
+- Total duelos con 50% WR: ~800-900 duelos
 
 **XP por derrota**: 0 XP (en MVP)
-
-⚠️ **Nota**: Valores de XP se ajustarán durante playtesting. Curva exponencial es definitiva.
 
 **Out of MVP**:
 - XP por participación (tiempo en match, daño infligido)
@@ -758,16 +771,33 @@ Después de 5 level-ups, "Chispa" podría tener:
 ```gdscript
 # scripts/core/progression.gd (Autoload)
 
-# Valores provisionales (sujeto a balance)
-const XP_PER_WIN: int = 50
 const XP_PER_LOSS: int = 0  # MVP: sin XP por derrotas
 
 func get_xp_required_for_level(level: int) -> int:
-    # Curva lineal simple: nivel N requiere N × 100 XP
-    return level * 100
+    # Curva exponencial: 100 × 1.5^(level-1)
+    return int(round(100.0 * pow(1.5, level - 1)))
 
-func award_xp_for_match(pelotita: PelotitaData, won: bool) -> Dictionary:
-    var xp_gained = XP_PER_WIN if won else XP_PER_LOSS
+func calculate_win_xp(your_level: int, opponent_level: int) -> int:
+    # Fórmula basada en diferencia de niveles
+    var diff = opponent_level - your_level
+    var xp = 0
+    
+    if diff >= 0:
+        # Oponente igual o más fuerte: base 25 + bonus, cap en 65
+        xp = min(25 + 5 * diff, 65)
+    else:
+        # Oponente más débil: penalización, mínimo 5
+        xp = max(5, 25 + 5 * diff)
+    
+    return xp
+
+func award_xp_for_match(pelotita: PelotitaData, won: bool, opponent_level: int) -> Dictionary:
+    var xp_gained = 0
+    if won:
+        xp_gained = calculate_win_xp(pelotita.level, opponent_level)
+    else:
+        xp_gained = XP_PER_LOSS
+    
     pelotita.xp += xp_gained
     
     var level_ups = []
@@ -2158,12 +2188,13 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 
 ### Alta Prioridad (Bloquean MVP)
 
-1. **XP y Level-Up** ✅ **PARCIALMENTE LOCKED**
+1. **XP y Level-Up** ✅ **LOCKED (provisional, sujeto a balance)**
    - ✅ **Locked**: Curva exponencial `100 × 1.5^(n-1)`; level cap inicial = 10 (expansiones +10 por tier)
-   - ❓ **TBD**: ¿XP fija (~25) o escalada por nivel oponente? (decidir en progreso)
+   - ✅ **Locked**: Fórmula de XP por diferencia de niveles (base 25, ±5 por diff, rango 5-65)
    - ✅ **Locked**: Derrota = 0 XP en MVP
+   - ⚠️ **Balance**: Valores son provisionales y se ajustarán en playtesting
    - ⛔ **Out of MVP**: XP por participación (daño, tiempo)
-   - **Impacto**: Curva definida permite calcular progresión, solo falta decidir XP por victoria
+   - **Impacto**: Sistema completo de progresión definido, listo para implementar
 
 2. **Árbol de Habilidades (Skill Tree)**
    - ¿Cuántas habilidades por elemento en MVP? (sugerencia: 4-6 cada uno = 16-24 total)
