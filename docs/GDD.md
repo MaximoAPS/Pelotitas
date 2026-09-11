@@ -1,6 +1,6 @@
 # Game Design Document - Pelotitas
 
-**Versión**: 0.3 (MVP en desarrollo)  
+**Versión**: 0.4 (MVP en desarrollo)  
 **Fecha**: Septiembre 2026  
 **Plataforma primaria**: Android móvil  
 **Engine**: Godot 4.x  
@@ -8,9 +8,9 @@
 
 ---
 
-## ✅ Decisiones Locked Recientes (v0.3)
+## ✅ Decisiones Locked Recientes (v0.4)
 
-Las siguientes decisiones de diseño han sido **cerradas y locked** en esta versión:
+Las siguientes decisiones de diseño han sido **cerradas y locked** en esta versión (incluye decisiones de v0.3 + nuevas de v0.4):
 
 ### 1. Duelo por Vida - Timer y Victoria por Timeout ✅ CERRADO
 
@@ -584,6 +584,246 @@ func _process(delta):
 
 ---
 
+### 15. Duel HUD - Both Players' HP Bars Always Visible ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **Both players' HP bars ALWAYS visible** during duels
+- ✅ **Player's own HP bar**: prominently displayed (top of screen, larger/primary)
+- ✅ **Opponent's HP bar**: always visible (secondary display, may be smaller/alternate position)
+- ✅ **No hidden information**: Both players can see each other's current HP at all times
+
+**Razón de diseño**:
+- ⚔️ **Competitive clarity**: Players need to see opponent HP to make tactical decisions (all-in vs defensive play)
+- 📊 **Standard PvP pattern**: Most competitive PvP games show both health bars
+- 🎯 **Decision-making**: Knowing opponent is low HP changes risk/reward calculations
+- 📱 **Mobile-friendly**: HP bars are compact, don't obstruct arena view significantly
+
+**UI Layout** (provisional):
+```
+┌──────────────────────────────────────────────┐
+│ [███ TU HP 85/110 ██████████░░]  [Rival: 45/100 ███░░░░] │
+│                                    Tiempo: 1:23│
+├──────────────────────────────────────────────┤
+│                                              │
+│                    ARENA                     │
+│             (jugadores, proyectiles)         │
+│                                              │
+│                                              │
+│  [  ◉  ]                        [ 1 ]        │
+│   STICK                         [ 2 ]        │
+│                                 [ 3 ]        │
+└──────────────────────────────────────────────┘
+```
+
+**Alternative layouts** (TBD implementation):
+- **Option A**: Both bars top (player left, opponent right)
+- **Option B**: Player bar top-left, opponent bar top-right corner (smaller)
+- **Option C**: Player bar top, opponent bar as floating indicator near their character
+
+**Implementation notes**:
+- HP bars update in real-time when damage is taken
+- Color coding: green/blue (player), red/orange (opponent)
+- Show numeric values: "85/110" format
+- Smooth visual transitions on HP change (not instant snap)
+
+**Estado**: ✅ COMPLETELY LOCKED - Both HP bars always visible
+
+---
+
+### 16. Hit Feedback Effect - Must Have Visual Feedback on Damage ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **On taking damage, MUST have hit feedback effect** (not only HP bar change)
+- ✅ **HP bar change alone is NOT sufficient** feedback
+- ⚠️ **Specific VFX style is TBD** (to be chosen during implementation/playtesting)
+
+**Razón de diseño**:
+- 💥 **Tactile feedback critical**: Players need instant, obvious visual confirmation they've been hit
+- 📱 **Mobile visibility**: HP bars may be small on phone screens, easy to miss subtle changes
+- 🎮 **Standard combat pattern**: All modern action games have hit reactions beyond HP reduction
+- ⚔️ **Combat clarity**: Clear damage feedback improves readability of fast-paced combat
+
+**Hit Feedback Options** (locked list of options, specific choice TBD):
+
+1. **Flash/White Blink** (brief color change)
+   - Player sprite flashes white or red for 0.1-0.2s
+   - Classic feedback, very readable
+   - Easy to implement
+
+2. **Screen Shake (Light)**
+   - Brief camera shake on hit (subtle, 2-5px displacement)
+   - Adds physical impact feel
+   - Must be subtle to not disorient (mobile consideration)
+
+3. **Floating Damage Numbers**
+   - Numeric damage value spawns above player (e.g. "-15")
+   - Floats up and fades out (1-1.5s duration)
+   - Provides exact feedback, popular in RPGs/MOBAs
+
+4. **Brief Color Pulse** (sprite tint)
+   - Player tinted red/orange for 0.2-0.3s, fades back to normal
+   - Less jarring than white flash
+   - Smooth visual transition
+
+5. **Knockback** (already exists)
+   - ✅ **Already implemented**: Projectile hits apply knockback (~150 px/s)
+   - Provides physical feedback, but should be combined with another option
+   - Knockback alone may not be noticed if hit at high velocity
+
+**Recommendation** (to be decided during implementation):
+- **Combination approach**: Use 2-3 effects together for maximum clarity
+  - Example: Flash/blink + knockback (already exists) + floating damage number
+  - Example: Color pulse + screen shake + knockback
+- **Configurable**: Consider Settings option to reduce intensity (accessibility)
+
+**Implementation guideline**:
+```gdscript
+# In Player.take_damage(amount: int)
+func take_damage(amount: int):
+    hp_current -= amount
+    
+    # HP bar update (existing)
+    emit_signal("hp_changed", hp_current, hp_max)
+    
+    # ✅ LOCKED: MUST have additional hit feedback
+    # Choose at least one of these:
+    play_hit_flash()           # Option 1: White/red flash
+    trigger_screen_shake()     # Option 2: Camera shake
+    spawn_damage_number(amount) # Option 3: Floating number
+    apply_color_pulse()        # Option 4: Red tint
+    # apply_knockback() - already implemented in projectile hit
+    
+    if hp_current <= 0:
+        die()
+```
+
+**Future considerations** (post-MVP):
+- Sound effect (SFX) on hit (deferred - audio out of MVP scope)
+- Haptic vibration on Android (optional enhancement)
+- Different feedback intensity based on damage amount (heavy hit vs chip damage)
+
+**Estado**: ✅ LOCKED - Hit feedback required, specific style TBD from options list
+
+---
+
+### 17. Post-Duel Flow - Return to Lobby, No Direct Rematch ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **After Result Screen**: Return to **Lobby/Multiplayer Selection**, NOT direct rematch
+- ✅ **No "Otra vez" button** that goes straight back to arena with same matchup
+- ✅ **No rematch without re-setup**: Players must go through lobby/connection flow again
+
+**Flow locked**:
+```
+Duel Ends
+  ↓
+Result Screen (Victoria/Derrota, XP, stats)
+  ↓
+[Continuar] button only
+  ↓
+Return to Lobby/Multiplayer Menu (or Main Menu)
+  ↓
+(Players can Host/Join again to play another match)
+```
+
+**Current flow documentation update**:
+- **Previous documentation** showed: `[Otra vez] → volver a Duelo`
+- **NEW LOCKED FLOW**: `[Continuar] → Lobby/Menu` (no direct rematch)
+
+**Razón de diseño**:
+- 🔄 **Network state clarity**: Rematch requires re-establishing connection parameters
+- 🎮 **Fair matchup control**: Both players confirm they want to play again (no forced rematch)
+- 📱 **Mobile session UX**: Clear end-of-session point, player can exit app cleanly
+- ⚖️ **Balanced progression**: Forces players to return to menu, see progression results, adjust loadout
+
+**Alternative considered and rejected**:
+- ❌ **"Rematch" button**: Would require both players to ready up, complex state management
+- ❌ **"Otra vez" direct loop**: Too easy to chain matches without break, disconnection handling issues
+
+**Implementation notes**:
+- Result screen has single **"Continuar"** (or "Volver al Menú") button
+- Clears multiplayer connection state
+- Returns to Main Menu or Multiplayer Lobby (host/join selection)
+- If level-up occurred, show level-up screen first, then return to menu
+
+**Estado**: ✅ LOCKED - Multi post-duel returns to lobby/menu, no direct rematch
+
+---
+
+### 18. Camera System - Frame Both Players with Zoom Limits ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **Camera frames both players** dynamically (keeps both on-screen)
+- ✅ **Zoom limits enforced** (min/max zoom bounds)
+- ✅ **Dynamic camera** adjusts position and zoom based on player separation
+
+**Camera behavior**:
+- **Target position**: Midpoint between both players
+- **Zoom level**: Adjusts so both players are visible with margin
+- **Zoom limits**:
+  - **Minimum zoom** (max zoom-out): Prevents arena from becoming too small visually
+  - **Maximum zoom** (max zoom-in): Prevents losing arena context when players very close
+- **Smooth transitions**: Camera movement and zoom smoothed (no instant snaps)
+
+**Razón de diseño**:
+- 👀 **Both players always visible**: Core PvP requirement - never lose sight of opponent
+- 📏 **Competitive fairness**: No player has off-screen advantage
+- 📱 **Mobile usability**: Limited screen space requires smart framing
+- 🎯 **Combat readability**: Appropriate zoom level for tactical decision-making
+
+**Zoom limits** (provisional values, tunable):
+```gdscript
+const CAMERA_ZOOM_MIN: float = 0.5  # Max zoom-out (arena appears smaller)
+const CAMERA_ZOOM_MAX: float = 1.5  # Max zoom-in (close-up)
+const CAMERA_MARGIN: float = 200.0  # Pixels of padding around players
+const CAMERA_SMOOTH_SPEED: float = 3.0  # Lerp factor for smooth movement
+```
+
+**Implementation guideline**:
+```gdscript
+# In arena manager or camera controller
+func _process(delta):
+    if players.size() < 2:
+        return
+    
+    var p1_pos = players[0].global_position
+    var p2_pos = players[1].global_position
+    
+    # Calculate midpoint
+    var midpoint = (p1_pos + p2_pos) / 2.0
+    
+    # Calculate required zoom to fit both players
+    var distance = p1_pos.distance_to(p2_pos)
+    var required_zoom = calculate_zoom_for_distance(distance)
+    
+    # Clamp zoom within limits
+    required_zoom = clamp(required_zoom, CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX)
+    
+    # Smooth camera movement
+    camera.global_position = camera.global_position.lerp(midpoint, CAMERA_SMOOTH_SPEED * delta)
+    camera.zoom = camera.zoom.lerp(Vector2.ONE * required_zoom, CAMERA_SMOOTH_SPEED * delta)
+
+func calculate_zoom_for_distance(dist: float) -> float:
+    # Zoom out when players far apart, zoom in when close
+    # Formula TBD based on playtesting
+    var base_distance = 500.0  # Distance at zoom 1.0
+    return base_distance / (dist + CAMERA_MARGIN)
+```
+
+**Edge cases**:
+- **Player near arena edge**: Camera ensures arena boundaries visible (don't frame outside arena)
+- **One player dead**: Camera can stop adjusting, or frame winner (TBD)
+- **Extreme separation**: Min zoom prevents arena becoming too tiny
+
+**Future enhancements** (post-MVP):
+- Camera shake on hit (tied to hit feedback system)
+- Slight lookahead in direction of player movement (predictive framing)
+- Camera zones (slight offset toward action-heavy area)
+
+**Estado**: ✅ LOCKED - Camera frames both players, zoom limits enforced
+
+---
+
 ### ⚠️ Preguntas Abiertas Restantes
 
 **Única pregunta de alta prioridad aún abierta**:
@@ -684,7 +924,7 @@ DUELO (1-3 minutos de combate)
    ↓
 Pantalla Resultado (ganador, XP ganada, level-up?)
    ↓
-[Otra vez] → volver a Duelo  /  [Menú] → Menú Principal
+[Continuar] → volver a Lobby/Menú (sin rematch directo - ✅ LOCKED v0.4)
 ```
 
 ### Loop de Progresión (sesiones múltiples)
@@ -2211,9 +2451,11 @@ graph TD
     M -->|No| L
     M -->|Sí| N[DUELO]
     N --> O[Pantalla Resultado]
-    O --> P{¿Qué hacer?}
-    P -->|Otra vez| F
-    P -->|Menú| B
+    O --> P[Continuar]
+    P --> B
+    
+    Note right of P: ✅ LOCKED v0.4: No rematch directo
+    Note right of P: Debe volver a lobby/menú
 ```
 
 **Nota importante (Locked)**: Antes de iniciar un duelo, el jugador **DEBE seleccionar 1 pelotita** de su roster (máximo 3 disponibles). Esta pelotita determina:
@@ -2467,10 +2709,11 @@ func get_selected_pelotita() -> PelotitaData:
 - Mobile HUD (UI overlay)
 - Manager script (arena_duelo.gd) que maneja modo y victoria
 
-**HUD**:
+**HUD** (✅ v0.4 locked: both players' HP visible):
 ```
 ┌──────────────────────────────────────────────┐
-│ [███ HP 85/100 ██████████░░]   Tiempo: 1:23 │
+│ [███ TU: 85/110 ██████████░░] [Rival: 72/100 ███████░░] │
+│                                  Tiempo: 1:23│
 ├──────────────────────────────────────────────┤
 │                                              │
 │                    ARENA                     │
@@ -2514,7 +2757,9 @@ func get_selected_pelotita() -> PelotitaData:
 │  Daño recibido: 110             │
 │  Tiempo: 1:42                   │
 │                                 │
-│  [▶ Otra vez]  [🏠 Menú]        │
+│  [Continuar]                    │
+│                                 │
+│  (✅ v0.4: No rematch - vuelve a lobby)
 └─────────────────────────────────┘
 ```
 
@@ -3732,6 +3977,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
 | 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. (13) Pause solo en local/test, no en multiplayer PvP (fairness competitivo). (14) Forfeit/disconnect = loss para quien abandona/desconecta, opponent wins + recibe win XP (mismo que victoria normal). Disconnect tratado como forfeit en MVP (provisional). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values, disconnect=forfeit. |
+| 0.4 | Sept 11, 2026 | **Nuevas decisiones locked**: (15) **Duel HUD - Both players' HP bars always visible** (player's own prominent, opponent's always shown, competitive clarity standard). (16) **Hit Feedback Effect - Must have visual feedback on damage** (not only HP bar change). Specific VFX style TBD from locked options list: flash/white blink, screen shake light, floating damage numbers, brief color pulse. Knockback already exists. (17) **Post-Duel Flow - Return to lobby/menu, no direct rematch** ("Otra vez" removed, [Continuar] returns to multiplayer lobby/main menu, must re-setup for another match). (18) **Camera System - Frame both players with zoom limits** (dynamic camera adjusts position and zoom to keep both players on-screen, min/max zoom bounds enforced, smooth transitions). **Flow documentation updated** to reflect no-rematch policy. |
 
 ---
 
