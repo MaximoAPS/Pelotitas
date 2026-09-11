@@ -1214,11 +1214,59 @@ func apply_hit(target: Player):
 
 ### 6.3 Arena y Mapa
 
-#### Dimensiones
+#### Dimensiones (Locked)
 
 - **Resolución base**: 1920×1080 px (landscape)
 - **Paredes**: rectángulos de 20px de grosor en los 4 bordes
 - **Área jugable**: 1880×1040 px interior
+
+#### Primer Mapa: "Arena de Pilares" (Locked para MVP)
+
+**Diseño confirmado**:
+- ✅ **Paredes perimetrales**: 4 bordes sólidos (daño por impacto activado)
+- ✅ **Obstáculos fijos**: Bloqueadores estáticos dentro del arena
+  - Forma: rectángulos o círculos (TBD implementación)
+  - Cantidad: 4-6 obstáculos (distribuidos simétricamente)
+  - Posición: diseñados para crear cover y líneas de sight interesantes
+  - Tipo: `StaticBody2D` con `CollisionShape2D`
+
+**Layout sugerido** (simétrico para fairness):
+```
+┌─────────────────────────────────────────┐
+│ Pared Superior                          │
+│                                         │
+│   P1        ▄▄▄      ▄▄▄        P2     │
+│  spawn      ███      ███      spawn    │
+│             ▀▀▀      ▀▀▀               │
+│                                         │
+│      ▄▄▄                    ▄▄▄         │
+│      ███                    ███         │
+│      ▀▀▀                    ▀▀▀         │
+│                                         │
+│             ▄▄▄      ▄▄▄                │
+│             ███      ███                │
+│             ▀▀▀      ▀▀▀                │
+│                                         │
+│ Pared Inferior                          │
+└─────────────────────────────────────────┘
+
+Leyenda:
+P1/P2 = Spawn points (simétricos)
+███ = Obstáculos fijos (pilares)
+```
+
+**Propósito de obstáculos**:
+- 🎯 **Cover táctico**: Esconderse detrás para evitar proyectiles
+- 🧩 **Complejidad espacial**: No es solo "correr en círculos"
+- ⚡ **Skill expression**: Uso de línea de sight, posicionamiento
+
+**Interacción Proyectil vs Obstáculo** (TBD - **Pendiente de definir**):
+- ⚠️ **Opción A**: Proyectiles explotan al impactar obstáculo (desaparecen)
+- ⚠️ **Opción B**: Proyectiles rebotan en obstáculos (ricochet)
+- ⚠️ **Opción C**: Proyectiles pasan a través (obstáculos solo bloquean jugadores)
+- ⚠️ **Opción D**: Depende del tipo de habilidad (algunas atraviesan, otras no)
+
+**Decisión requerida**: Elegir A, B, C, o D antes de implementar proyectiles avanzados
 
 #### Configuración de Paredes
 
@@ -1231,6 +1279,36 @@ StaticBody2D (Wall_Top):
 
 # Similar para Wall_Bottom, Wall_Left, Wall_Right
 ```
+
+#### Configuración de Obstáculos (Locked)
+
+**Implementación sugerida**:
+```gdscript
+# arena_duelo.tscn - Obstáculos como StaticBody2D
+
+StaticBody2D (Obstacle_01):
+  CollisionShape2D: RectangleShape2D(100, 100)  # Pilar cuadrado
+  Position: (600, 400)
+  Color: (0.3, 0.3, 0.3, 1.0)  # Gris oscuro
+
+StaticBody2D (Obstacle_02):
+  CollisionShape2D: RectangleShape2D(100, 100)
+  Position: (1320, 400)  # Simétrico al 01
+
+StaticBody2D (Obstacle_03):
+  CollisionShape2D: CircleShape2D(60)  # Pilar redondo
+  Position: (960, 300)  # Centro superior
+
+# ... más obstáculos según layout final
+```
+
+**Propiedades**:
+- `StaticBody2D` → No se mueven, no tienen física dinámica
+- `collision_layer = 2` (layer "Obstacles")
+- `collision_mask = 1 | 4` (colisiona con Players y Projectiles, si Opción A elegida)
+- Sin HP ni daño (no son destructibles en MVP)
+
+**TBD**: Interacción proyectil vs obstáculo (ver opciones A/B/C/D arriba)
 
 #### Posiciones de Spawn (Duelo 1v1)
 
@@ -2363,25 +2441,34 @@ Placeholder: 4 disparos idénticos en mecánica, diferenciados solo por color.
 
 ---
 
-### 10.3 Mapas / Arenas (TBD)
+### 10.3 Mapas / Arenas
 
-#### MVP (P0)
+#### MVP (P0) - **LOCKED**
 
-- **Arena Simple**: rectángulo 1920×1080, paredes sólidas, sin obstáculos
+**Primer Mapa**: "Arena de Pilares" (Locked)
+- ✅ Rectángulo 1920×1080, paredes sólidas perimetrales
+- ✅ **4-6 obstáculos fijos** (pilares/bloqueadores estáticos) distribuidos simétricamente
+- ✅ Cover táctico + líneas de sight interesantes
+- ✅ Spawn points simétricos (fairness)
+- ⚠️ **Interacción proyectil vs obstáculo**: TBD (ver sección 6.3 para opciones A/B/C/D)
 
-#### Futuros (TBD)
+**Único mapa en MVP**: Por simplicidad, solo un mapa bien balanceado para Duelo por Vida
 
-**Ideas de mapas**:
-- **Arena con Pilares**: obstáculos estáticos en el centro (cover)
-- **Arena Estrecha**: pasillo largo, combate lineal
-- **Arena Circular**: forma redonda, sin esquinas
-- **Laberinto**: paredes internas complejas
+#### Post-MVP (P1-P2)
+
+**Ideas de mapas futuros**:
+- **Arena Estrecha**: pasillo largo, combate lineal (favorece habilidades de área)
+- **Arena Circular**: forma redonda, sin esquinas (más caótica)
+- **Laberinto**: paredes internas complejas (favorece emboscadas)
 - **Arena Peligrosa**: zonas de daño en el suelo (lava, espinas)
+- **Arena Abierta**: sin obstáculos (favorece movilidad pura)
+- **Arena Asimétrica**: un lado tiene ventaja de posición (para modos asimétricos)
 
-**TBD**:
-- ¿Cuántos mapas en MVP?
-- ¿Mapas aleatorios o selección manual?
-- ¿Mapas específicos por modo?
+**TBD Post-MVP**:
+- ¿Cuántos mapas para Tier 2?
+- ¿Mapas aleatorios o selección manual antes del match?
+- ¿Mapas específicos por modo? (ej: King of Hill necesita zona central)
+- ¿Rotación de mapas semanal?
 
 ---
 
@@ -2488,12 +2575,23 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - Cooldowns por defecto: ¿1s básicas, 5s intermedias, 15s ultimates?
    - **Impacto**: Ritmo de combate
 
-9. **Mapa y Obstáculos**
-   - ¿Tamaño de arena para MVP? (actual: 1920×1080, ¿suficiente?)
-   - ¿Agregar obstáculos en arena MVP? (pilares, cover)
-   - **Impacto**: Táctica de combate
+9. **Mapa y Obstáculos** ✅ **PARCIALMENTE LOCKED**
+   - ✅ **Locked**: Tamaño 1920×1080 suficiente para MVP
+   - ✅ **Locked**: Primer mapa incluye 4-6 obstáculos fijos (pilares)
+   - ⚠️ **TBD**: Interacción proyectil vs obstáculo (explotan / rebotan / atraviesan / mixto)
+   - **Impacto**: Táctica de combate (cover, línea de sight)
 
-10. **AoE y Explosiones**
+10. **Proyectiles vs Obstáculos** ⚠️ **TBD CRÍTICO**
+    - ✅ Mapa MVP tiene 4-6 obstáculos fijos (locked)
+    - ❓ **¿Qué pasa cuando proyectil impacta obstáculo?**
+      - **Opción A**: Explotan y desaparecen (cover efectivo)
+      - **Opción B**: Rebotan / ricochet (skill shots avanzados)
+      - **Opción C**: Atraviesan (obstáculos solo bloquean jugadores)
+      - **Opción D**: Mixto (según tipo de habilidad)
+    - **Impacto**: Core gameplay, balance de cover vs movilidad
+    - **Urgencia**: Alta (necesario antes de implementar proyectiles avanzados)
+
+11. **AoE y Explosiones**
     - ¿Los disparos básicos explotan con AoE o solo daño single-target?
     - Si AoE: ¿radio? ¿daño decae con distancia?
     - **Impacto**: Complejidad de habilidades
