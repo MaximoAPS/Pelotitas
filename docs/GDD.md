@@ -1688,6 +1688,85 @@ user://
 - **MVP**: **3 pelotitas gratis** (máximo)
 - **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
 
+#### Borrado de Pelotita (Locked)
+
+**Cuándo está disponible**:
+- Cuando el roster está lleno (3/3 pelotitas) y el jugador quiere crear una nueva
+
+**Flujo de confirmación** (Locked - **doble confirmación recomendada**):
+1. Jugador intenta crear nueva pelotita con roster lleno
+2. Sistema muestra mensaje: *"Tu roster está lleno (3/3). Debes borrar una pelotita para liberar espacio."*
+3. Jugador selecciona pelotita a borrar desde lista
+4. **Primera confirmación**: Modal muestra:
+   ```
+   ┌─────────────────────────────────────┐
+   │  ⚠️  ¿Borrar esta Pelotita?         │
+   ├─────────────────────────────────────┤
+   │                                     │
+   │  "Chispa"                           │
+   │  Nivel 12 • Color Rojizo            │
+   │  ATK 72 • DEF 58 • SPD 66          │
+   │                                     │
+   │  15 victorias • 8 derrotas          │
+   │                                     │
+   │  Esta acción NO se puede deshacer.  │
+   │                                     │
+   │  [Cancelar]  [Borrar]               │
+   └─────────────────────────────────────┘
+   ```
+5. Si confirma → **Segunda confirmación**: Input manual del nombre
+   ```
+   ┌─────────────────────────────────────┐
+   │  ⚠️  Confirmación Final             │
+   ├─────────────────────────────────────┤
+   │                                     │
+   │  Escribe el nombre de la pelotita   │
+   │  para confirmar el borrado:         │
+   │                                     │
+   │  "Chispa"                           │
+   │                                     │
+   │  [___________________]              │
+   │                                     │
+   │  [Cancelar]  [Confirmar Borrado]    │
+   └─────────────────────────────────────┘
+   ```
+6. Si el nombre coincide exactamente → Borrado ejecutado
+7. Sistema elimina archivo `user://pelotitas/pelotita_<uuid>.tres`
+8. **No hay undo en MVP** (sin papelera de reciclaje)
+
+**Implementación**:
+```gdscript
+# scripts/core/progression.gd
+
+func can_delete_pelotita(uuid: String) -> bool:
+    # Siempre se puede borrar si existe
+    return has_pelotita(uuid)
+
+func delete_pelotita(uuid: String) -> bool:
+    var pelotita = load_pelotita(uuid)
+    if not pelotita:
+        return false
+    
+    var path = "user://pelotitas/pelotita_%s.tres" % uuid
+    var dir = DirAccess.open("user://pelotitas/")
+    if dir.file_exists(path):
+        dir.remove(path)
+        print("Pelotita %s (%s) borrada permanentemente" % [pelotita.nickname, uuid])
+        return true
+    return false
+
+func has_pelotita(uuid: String) -> bool:
+    var path = "user://pelotitas/pelotita_%s.tres" % uuid
+    return FileAccess.file_exists(path)
+```
+
+**Notas de diseño**:
+- ⚠️ **Decisión irreversible**: La doble confirmación protege contra borrados accidentales
+- 🎯 **UX clara**: Mostrar stats y récord para que el jugador recuerde qué está borrando
+- 🚫 **Sin undo en MVP**: Implementar papelera/undo requiere lógica adicional de soft-delete
+- 💾 **Borrado físico**: El archivo `.tres` se elimina del sistema de archivos
+- 🔮 **Futuro**: Considerar período de gracia (ej: 7 días en papelera) post-MVP
+
 #### Save/Load de Pelotita
 
 ```gdscript
