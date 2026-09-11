@@ -1663,25 +1663,22 @@ B: speed_m_s = 50 / 54.77 ≈ 0.913 m/s → 183 px/s
 
 El movimiento NO es instantáneo. El input del jugador define dirección deseada, y la pelotita acelera hacia ella.
 
-**Fórmulas locked** (✅ provisional, tunable si muy sluggish):
+**Fórmulas locked**:
 
 ```gdscript
 # Aceleración: vmax / 4 (≈4 segundos desde 0 hasta velocidad máxima)
-const ACELERACION_FACTOR: float = 4.0  # Divisor de vmax
+const ACELERACION_FACTOR: float = 4.0  # Divisor de vmax (tunable si sluggish)
 var aceleracion: float = max_speed_px_s / ACELERACION_FACTOR
 
-# Fricción: vmax / 4 (misma escala de tiempo, provisional)
-const FRICCION_FACTOR: float = 4.0  # Divisor de vmax (provisional)
-var friccion: float = max_speed_px_s / FRICCION_FACTOR
+# Fricción: 0 (sin fricción - coast con inercia al soltar stick)
+const FRICCION: float = 0.0  # ✅ LOCKED - sin desaceleración pasiva
 
 func _physics_process(delta):
     if input_direction.length() > 0:
         # Acelerar hacia dirección deseada
         var target_velocity = input_direction.normalized() * max_speed_px_s
         velocity = velocity.move_toward(target_velocity, aceleracion * delta)
-    else:
-        # Aplicar fricción
-        velocity = velocity.move_toward(Vector2.ZERO, friccion * delta)
+    # NO hay else - al soltar stick, velocidad se mantiene (coast con inercia)
     
     velocity = velocity.limit_length(max_speed_px_s)
     move_and_slide()
@@ -1690,27 +1687,37 @@ func _physics_process(delta):
 **Resultado**: 
 - Movimiento con peso e inercia, no detención/arranque instantáneos
 - **Time-to-max**: ~4 segundos en línea recta sin cambios de dirección
-- **Tunable upward**: Si se siente muy sluggish, reducir ACELERACION_FACTOR (ej: 3.0 = 3s, 2.0 = 2s)
-- **Friction provisional**: Mismo factor que aceleración (sujeto a cambio si se necesita stop más rápido/lento)
+- **Coasting**: Al soltar stick, pelotita continúa con velocidad actual (sin desaceleración)
+- **Stop**: Solo se detiene al chocar con pared/obstáculo, o al aplicar input en dirección opuesta
+- **Tunable upward**: Si aceleración muy sluggish, reducir ACELERACION_FACTOR (ej: 3.0 = 3s, 2.0 = 2s)
 
 **Razón de diseño**:
 - 🎮 **Dinámico**: Aceleración escala con velocidad del jugador (rápidos aceleran más rápido)
 - ⚖️ **Balanceado**: Proporción constante vmax/4 independiente de stats absolutos
 - 🔧 **Tunable**: Factor explícito permite ajustar feel sin romper proporciones
 - 📱 **Mobile-friendly**: 4 segundos da tiempo para reacción táctil, no demasiado twitchy
+- 🌌 **Física espacial**: Sin fricción = inercia pura (estilo juegos espaciales, slippery ice)
+- 🎯 **Skill ceiling**: Requiere planificación y control direccional preciso
+
+**Post-MVP consideraciones**:
+- Si se necesita fricción futura, sería **muy baja** (ej: `vmax / 20` o menor)
+- Solo agregar si coasting puro resulta demasiado difícil de controlar en playtesting
+- Preferencia: mantener fricción = 0 para feel único
 
 **Ejemplo numérico**:
 ```
 Pelotita A: max_speed_px_s = 200 px/s
   → aceleracion = 200 / 4 = 50 px/s²
-  → tiempo a max speed ≈ 200/50 = 4.0 segundos
+  → tiempo a max speed ≈ 4.0 segundos
+  → al soltar stick: continúa a 200 px/s indefinidamente
 
 Pelotita B: max_speed_px_s = 300 px/s
   → aceleracion = 300 / 4 = 75 px/s²
-  → tiempo a max speed ≈ 300/75 = 4.0 segundos
+  → tiempo a max speed ≈ 4.0 segundos
+  → al soltar stick: continúa a 300 px/s indefinidamente
 ```
 
-**Estado**: ✅ LOCKED (provisional - tunable si sluggish)
+**Estado**: ✅ LOCKED - Aceleración vmax/4, Fricción = 0 (coasting)
 
 #### Knockback
 
