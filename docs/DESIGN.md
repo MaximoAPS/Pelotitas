@@ -89,20 +89,21 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 
 ### Progresión y Level-Up
 
-**Fuente de XP y Cantidades** (provisional - sujeto a balance):
-- **Victoria**: +50 XP
+**Curva de XP** (Locked):
+- **Fórmula exponencial**: `round(100 × 1.5^(n-1))`
+  - Nivel 1: 100 XP, Nivel 2: 150 XP, Nivel 3: 225 XP, Nivel 4: 338 XP
+  - Nivel 10: 3849 XP (total acumulado: 11347 XP)
 - **Derrota**: 0 XP en MVP
-- **Curva de XP**: Nivel N requiere N × 100 XP
-  - Nivel 1: 100 XP, Nivel 2: 200 XP, Nivel 3: 300 XP, etc.
-  - Total para nivel 10: 5500 XP (110 victorias)
-- **Out of MVP**: XP por participación (daño, tiempo) - no implementado en MVP
+
+**XP por Victoria** (TBD - decidir en progreso):
+- **Opción A**: XP fija (~25 XP) - simple, predecible
+- **Opción B**: XP escalada por nivel oponente (15-30 XP) - incentiva rivales fuertes
+- ❓ MVP usará opción A o B (pendiente)
 
 **Level Cap**:
 - **Tier 1 (MVP)**: nivel 0-10
-- **Expansiones futuras**: +10 niveles por tier (20, 30, 40, etc.) con nuevo contenido (habilidades, modos, mapas)
+- **Expansiones futuras**: +10 niveles por tier (20, 30, 40, etc.) con nuevo contenido
 - XP ganada al alcanzar cap se guarda para el próximo tier
-
-⚠️ **Nota**: Valores de XP son provisionales y se ajustarán durante playtesting.
 
 **Al subir de nivel, se otorgan**:
 1. **+10 puntos de stats** distribuidos aleatoriamente entre ATK/DEF/Speed
@@ -187,10 +188,10 @@ Estas son **preguntas abiertas** que aún no tienen respuesta definitiva. **NO i
 
 - ¿Valores iniciales de ATK/DEF/Speed/masa en nivel 1?
 
-### Balance y Ajustes
+### Sistema de XP y Progresión
 
-- ¿Los valores provisionales de XP (50 por victoria, N×100 por nivel) necesitan ajustes?
-- ¿La progresión se siente muy lenta o muy rápida en playtesting?
+- ❓ **Pendiente**: ¿MVP usa XP fija (Opción A) o escalada por oponente (Opción B)?
+- ¿La curva exponencial 1.5x se siente adecuada en playtesting?
 - ¿Considerar XP por derrota post-MVP para mejorar retención?
 
 ### Flujo de Creación

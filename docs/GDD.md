@@ -707,35 +707,48 @@ Después de 5 level-ups, "Chispa" podría tener:
   - Futuras expansiones subirán el cap en incrementos de +10 (nivel 20, 30, 40, etc.)
   - Cada expansión viene con nuevo contenido: habilidades, modos, mapas
 
-**Provisional (sujeto a balance)**:
-- **XP por victoria**: +50 XP
-- **XP por derrota**: 0 XP (en MVP)
-- **Curva de XP**: Lineal simple
-  - Nivel N requiere `N × 100` XP desde nivel N-1
-  - Nivel 1: 100 XP total
-  - Nivel 2: 200 XP adicionales (300 XP acumulada)
-  - Nivel 3: 300 XP adicionales (600 XP acumulada)
-  - ...
-  - Nivel 10: 1000 XP adicionales (5500 XP acumulada total)
+**Curva de XP** (Locked):
+- **Fórmula exponencial**: XP requerida para alcanzar nivel N desde N-1:
+  ```
+  XP_required(N) = round(100 × 1.5^(N-1))
+  ```
+- **Tabla de niveles**:
 
-**Ejemplo de progresión**:
-```
-Pelotita nueva (nivel 0):
-  Duelo 1: Victoria → +50 XP (50/100) 
-  Duelo 2: Victoria → +50 XP (100/100) → LEVEL UP a nivel 1
-  Duelo 3: Victoria → +50 XP (50/200)
-  Duelo 4: Victoria → +50 XP (100/200)
-  Duelo 5: Derrota → +0 XP (100/200)
-  Duelo 6: Victoria → +50 XP (150/200)
-  Duelo 7: Victoria → +50 XP (200/200) → LEVEL UP a nivel 2
-```
+| Nivel | XP Requerida | XP Acumulada | Duelos (fijo 25) | Duelos (scaled) |
+|-------|--------------|--------------|------------------|-----------------|
+| 1 | 100 | 100 | 4 | 3-4 |
+| 2 | 150 | 250 | 6 | 5-6 |
+| 3 | 225 | 475 | 9 | 7-8 |
+| 4 | 338 | 813 | 14 | 10-11 |
+| 5 | 507 | 1320 | 20 | 14-16 |
+| 6 | 760 | 2080 | 30 | 21-24 |
+| 7 | 1141 | 3221 | 46 | 32-36 |
+| 8 | 1711 | 4932 | 68 | 48-54 |
+| 9 | 2566 | 7498 | 103 | 72-82 |
+| 10 | 3849 | 11347 | 154 | 108-123 |
 
-**Tiempo estimado para nivel 10**:
-- XP total necesaria: 5500 XP
-- Victorias necesarias: 110 duelos ganados
-- Con 50% win rate: ~220 duelos totales
+**XP por victoria** (TBD - decidir en progreso):
 
-⚠️ **Nota**: Estos valores son provisionales y se ajustarán durante playtesting y balance.
+**Opción A: XP Fija (~25 XP por victoria)**
+- Ventajas: Simple, predecible, fácil de balancear
+- Desventajas: No recompensa enfrentar oponentes más fuertes
+- Total duelos a nivel 10: ~454 victorias (908 duelos con 50% WR)
+
+**Opción B: XP Escalada por nivel del oponente**
+- Fórmula: `XP = base × (1 + opponent_level × 0.1)`
+  - Base = 15-20 XP
+  - vs nivel 1: 15 × 1.1 = 16.5 XP
+  - vs nivel 5: 15 × 1.5 = 22.5 XP
+  - vs nivel 10: 15 × 2.0 = 30 XP
+- Ventajas: Incentiva enfrentar rivales más fuertes, progresión más rápida en high levels
+- Desventajas: Más complejo, puede crear farming de low-levels o avoiding high-levels
+- Total duelos a nivel 10: ~340-400 victorias (variable según matchmaking)
+
+❓ **Pendiente de definir**: ¿MVP usa Opción A (fija) u Opción B (escalada)? Preguntar durante progreso.
+
+**XP por derrota**: 0 XP (en MVP)
+
+⚠️ **Nota**: Valores de XP se ajustarán durante playtesting. Curva exponencial es definitiva.
 
 **Out of MVP**:
 - XP por participación (tiempo en match, daño infligido)
@@ -2145,12 +2158,12 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 
 ### Alta Prioridad (Bloquean MVP)
 
-1. **XP y Level-Up** ✅ **LOCKED (valores provisionales sujetos a balance)**
-   - ✅ **Locked**: XP por victorias; level cap inicial = 10 (expansiones +10 por tier)
-   - ✅ **Provisional**: Victoria = +50 XP; Derrota = 0 XP; Curva: nivel N requiere N×100 XP
-   - ⚠️ **Balance**: Valores se ajustarán durante playtesting
+1. **XP y Level-Up** ✅ **PARCIALMENTE LOCKED**
+   - ✅ **Locked**: Curva exponencial `100 × 1.5^(n-1)`; level cap inicial = 10 (expansiones +10 por tier)
+   - ❓ **TBD**: ¿XP fija (~25) o escalada por nivel oponente? (decidir en progreso)
+   - ✅ **Locked**: Derrota = 0 XP en MVP
    - ⛔ **Out of MVP**: XP por participación (daño, tiempo)
-   - **Impacto**: Con valores provisionales, se puede comenzar balance y testing
+   - **Impacto**: Curva definida permite calcular progresión, solo falta decidir XP por victoria
 
 2. **Árbol de Habilidades (Skill Tree)**
    - ¿Cuántas habilidades por elemento en MVP? (sugerencia: 4-6 cada uno = 16-24 total)
