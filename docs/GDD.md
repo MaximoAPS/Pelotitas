@@ -195,7 +195,60 @@ pelotita.equipped_passive = ""   # Vacío
 
 ---
 
-### 8. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 8. Player Nickname en First Launch ✅ CERRADO
+
+**Decisión locked**:
+- ✅ **Nickname set on first launch** (única vez al iniciar app por primera vez)
+- ✅ **Almacenamiento**: `UserPrefs.player_nickname` (guardado en `user://user_prefs.tres`)
+- ✅ **Editable**: Puede cambiarse después en pantalla de Settings (cuando exista)
+
+**Flujo first launch**:
+1. Boot detecta que `user_prefs.tres` no existe O `player_nickname` está vacío
+2. Mostrar modal/pantalla "Welcome"
+3. Input de nickname (3-16 caracteres, alfanumérico recomendado)
+4. Validar y guardar en `UserPrefs.player_nickname`
+5. Continuar a menú principal
+
+**Uso del nickname**:
+- Mostrado en lobby multiplayer (identificación del jugador local)
+- Mostrado al oponente durante match (via sincronización de red)
+- NO es el nombre de pelotitas (pelotitas tienen su propio nickname independiente)
+
+**Implementación**:
+```gdscript
+# En Boot._ready()
+func check_first_launch():
+    var prefs_path = "user://user_prefs.tres"
+    if not FileAccess.file_exists(prefs_path):
+        show_welcome_screen()
+        return
+    
+    var prefs = ResourceLoader.load(prefs_path) as UserPrefs
+    if prefs.player_nickname.is_empty():
+        show_welcome_screen()
+        return
+    
+    # Ya tiene nickname, continuar normalmente
+    proceed_to_main_menu()
+
+func show_welcome_screen():
+    # Modal o scene con input
+    # "Welcome to Pelotitas! Enter your nickname:"
+    # [_____________]
+    # [Continue]
+    pass
+```
+
+**Pantalla de Settings** (futuro):
+- Opción "Change Nickname"
+- Re-validar (3-16 caracteres)
+- Guardar en `UserPrefs`
+
+**Estado**: ✅ CERRADO
+
+---
+
+### 9. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -820,7 +873,7 @@ func end_match(winner_peer_id: int):
     # Otorgar XP (lógica TBD)
 ```
 
-### 4.7 UserPrefs (Preferencias Locales)
+### 4.7 UserPrefs (Preferencias Locales) ✅ **Nickname locked**
 
 **Clase**: `UserPrefs` (Resource guardado en `user://`)
 
@@ -828,7 +881,14 @@ func end_match(winner_peer_id: int):
 class_name UserPrefs extends Resource
 
 @export var last_selected_pelotita_uuid: String = ""
-@export var player_nickname: String = "Jugador"  # Nickname de red por defecto
+
+# ✅ LOCKED: Player nickname set on first launch
+@export var player_nickname: String = ""  # Nickname de red/multiplayer
+# - Set on first launch (prompt input)
+# - Stored locally in user://user_prefs.tres
+# - Can be edited later in Settings screen
+# - Used for lobby/multiplayer display
+
 @export var master_volume: float = 1.0
 @export var sfx_volume: float = 1.0
 @export var music_volume: float = 1.0
@@ -1827,17 +1887,32 @@ graph TD
 
 ### 8.2 Pantallas Detalladas
 
-#### Boot (scenes/boot/boot.tscn)
+#### Boot (scenes/boot/boot.tscn) ✅ **First launch flow locked**
 
-**Propósito**: Carga inicial, splash screen (futuro)
+**Propósito**: Carga inicial, splash screen (futuro), first-launch setup
 
 **Acciones**:
 1. Cargar autoloads (Game, Net, Progression, TouchInput)
 2. Cargar preferencias de usuario (`user://user_prefs.tres`)
-3. Cargar lista de pelotitas guardadas (`user://pelotitas/`)
-4. Transición automática a Menú Principal (1-2s)
+3. ✅ **LOCKED - First launch check**:
+   - Si `user_prefs.tres` no existe O `player_nickname` está vacío → **First launch**
+   - Mostrar pantalla "Welcome" con input de nickname
+   - Validar nickname (3-16 caracteres, alfanumérico)
+   - Guardar en `UserPrefs.player_nickname`
+   - Guardar `user_prefs.tres`
+4. Cargar lista de pelotitas guardadas (`user://pelotitas/`)
+5. Transición automática a Menú Principal (1-2s)
 
-**Elementos UI**: Logo placeholder, loading spinner
+**Elementos UI**: 
+- Logo placeholder, loading spinner
+- **First launch**: Modal "Welcome" con input de nickname
+
+**Flujo first launch**:
+```
+Boot → ¿user_prefs existe y tiene nickname?
+  NO → Mostrar "Welcome, enter your nickname" → Guardar → Menú Principal
+  SÍ → Cargar y continuar → Menú Principal
+```
 
 ---
 
@@ -3307,7 +3382,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. First-launch forced pelotita creation marcado provisional. Disconnect behavior marcado como abierto. |
 
 ---
 
