@@ -270,7 +270,44 @@ func show_welcome_screen():
 
 ---
 
-### 10. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 10. Audio en MVP - Out of Scope ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **NO audio en MVP** (ni SFX ni música)
+- ✅ **MVP es silencioso**: Solo feedback visual (VFX, partículas, animaciones)
+- ✅ **Deferred a Fase 3** (beta/polish): Audio se agrega después de MVP funcional
+
+**Razón de diseño**:
+- 🎯 **Prioridad MVP**: Mecánicas de juego, física, networking > audio
+- ⚡ **Iteración rápida**: Audio assets requieren tiempo de creación/adquisición
+- 🔇 **Testing móvil**: Muchos jugadores testean en silencio anyway
+- ✅ **Agregable después**: Audio no afecta arquitectura core, fácil de integrar post-MVP
+
+**Qué NO hay en MVP**:
+- ❌ SFX (disparo, impacto, explosión, level-up, UI clicks)
+- ❌ Música (menú, combate, victoria)
+- ❌ Audio feedback de colisiones o daño
+- ❌ Controles de volumen funcionales (UI existe pero no hace nada)
+
+**Fase 3 - Audio Implementation** (post-MVP):
+- 🔊 **SFX básicos**: 
+  - Disparo (4 variantes elementales)
+  - Impacto proyectil (explosion sound)
+  - Daño recibido (hit sound)
+  - Level-up (fanfare)
+  - UI clicks/navigation
+- 🎵 **Música**:
+  - Menú principal (loop 1-2 min)
+  - Combate (loop intenso 1-2 min)
+  - Victoria/Derrota (stinger corto)
+- 🎚️ **AudioStreamPlayer** via Godot (3 buses: Master, SFX, Music)
+- 🔧 **Controles de volumen** funcionales en Settings
+
+**Estado**: ✅ CERRADO - Audio out of MVP scope
+
+---
+
+### 11. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -915,9 +952,11 @@ class_name UserPrefs extends Resource
 # - Can be edited later in Settings screen
 # - Used for lobby/multiplayer display
 
-@export var master_volume: float = 1.0
-@export var sfx_volume: float = 1.0
-@export var music_volume: float = 1.0
+# ⚠️ Audio volumes (futuro - NO en MVP)
+@export var master_volume: float = 1.0  # Out of MVP scope
+@export var sfx_volume: float = 1.0     # Out of MVP scope
+@export var music_volume: float = 1.0   # Out of MVP scope
+
 @export var show_fps: bool = false
 
 # ... otras preferencias UI/UX
@@ -2959,9 +2998,12 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 - UI de equipar loadout
 - Skill tree básico (desbloqueo con puntos)
 
-**Fase 3: Contenido Expandido**
+**Fase 3: Contenido Expandido + Audio**
 - Arte custom (sprites pelotitas, proyectiles)
-- SFX y música
+- ⚠️ **SFX y música** (deferred from MVP - beta/polish phase)
+  - SFX: disparo, impacto, level-up, UI clicks
+  - Música: menú, combate (loops cortos)
+  - Audio engine: AudioStreamPlayer via Godot
 - 1-2 modos adicionales (King of Hill, Team Deathmatch)
 - 2-3 mapas adicionales con obstáculos
 - Partículas y VFX polish
@@ -3113,6 +3155,7 @@ Estas features NO están en el roadmap de MVP, pero pueden considerarse post-lau
 
 ### Definitivamente Fuera
 
+- ✅ **Audio (SFX + Música)**: Deferred a Fase 3 (beta/polish) - MVP es silencioso
 - **Cuentas de usuario cloud**: MVP es solo local, nicknames temporales
 - **Matchmaking automático**: MVP es host/join manual por IP
 - **Servidores dedicados**: MVP usa host como servidor
@@ -3317,7 +3360,8 @@ flowchart TD
 ### Experiencia
 
 - ✅ **Onboarding claro**: nuevo usuario puede crear pelotita y jugar en < 2 minutos
-- ✅ **Feedback visual/audio** en acciones clave (disparo, impacto, level-up)
+- ✅ **Feedback visual** en acciones clave (disparo, impacto, level-up)
+  - ⚠️ Audio feedback deferred to beta phase (MVP is silent)
 - ✅ **UI legible** en pantallas móviles (botones grandes, texto claro)
 
 ---
@@ -3408,7 +3452,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). Provisionales: first-launch forced pelotita creation, orientation landscape. Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values. Disconnect behavior marcado como abierto. |
 
 ---
 
