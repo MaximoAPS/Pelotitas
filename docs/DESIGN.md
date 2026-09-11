@@ -196,9 +196,16 @@ Pelotita A (Ataque: 15) ataca a Pelotita B (Defensa: 8)
 Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
 ```
 
-#### Velocidad de Movimiento (Sistema Relativo)
+#### Velocidad de Movimiento (Sistema Relativo con Inercia)
 
-La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match. Esto garantiza que las velocidades sean proporcionales entre jugadores independientemente de los valores absolutos de sus stats.
+La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match, con física de **inercia** para movimiento fluido.
+
+**Sistema de inercia**:
+- El input del jugador define una **dirección deseada**, no velocidad instantánea
+- La pelotita **acelera** hacia la dirección deseada (tuneable: `aceleracion` ≈ 900 px/s²)
+- Sin input, se aplica **fricción** que desacelera gradualmente (tuneable: `friccion` ≈ 700 px/s²)
+- La velocidad se clampea a la **velocidad máxima** calculada del stat (`speed_m_s × PIXELS_PER_METER`)
+- Resultado: movimiento con peso e inercia, no detención/arranque instantáneos
 
 **Fórmula**:
 

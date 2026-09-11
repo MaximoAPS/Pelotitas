@@ -5,17 +5,19 @@ class_name Loadout
 const MAX_USABLE_ABILITIES = 3
 const MAX_PASSIVE_ABILITIES = 1
 
-var usable_abilities: Array[UsableAbility] = []
+var usable_abilities  # Completely untyped variable
 var passive_ability: PassiveAbility = null
 var owner_player: Player = null
 
 
-func _ready() -> void:
+func _init() -> void:
+	# Initialize as untyped array in _init() since Loadout may not be added to scene tree
+	usable_abilities = []
 	usable_abilities.resize(MAX_USABLE_ABILITIES)
 
 
 ## Equipa una habilidad usable en un slot (0-2)
-func equip_usable(ability: UsableAbility, slot: int) -> bool:
+func equip_usable(ability, slot: int) -> bool:
 	if slot < 0 or slot >= MAX_USABLE_ABILITIES:
 		push_error("[Loadout] Slot inválido: %d" % slot)
 		return false
@@ -57,7 +59,7 @@ func use_ability(slot: int, aim_direction: Vector2 = Vector2.RIGHT) -> bool:
 
 ## Limpia todos los slots
 func clear_loadout() -> void:
-	usable_abilities.clear()
+	usable_abilities = []
 	usable_abilities.resize(MAX_USABLE_ABILITIES)
 	
 	if passive_ability and owner_player:

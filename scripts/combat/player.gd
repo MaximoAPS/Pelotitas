@@ -19,6 +19,12 @@ signal died()
 @export var velocidad: float = 1.0
 @export var masa: float = 1.0
 
+@export_group("Movement Tuning")
+@export var aceleracion: float = 900.0
+@export var friccion: float = 700.0
+@export var rebote_jugador: float = 1.15
+@export var rebote_min_impulse: float = 50.0
+
 ## Constante de escala de arena (metros virtuales → píxeles)
 const PIXELS_PER_METER: float = 200.0
 
@@ -49,12 +55,17 @@ func _physics_process(delta: float) -> void:
 	# Dummies no procesan input pero sí física (pueden ser empujados, colisionar con paredes)
 	var is_dummy = has_meta("is_dummy") and get_meta("is_dummy")
 	
-	if not is_dummy and not Net.has_authority(self):
-		return  # Solo el owner controla movimiento (excepto dummies)
+	# Offline mode: allow control without authority if no multiplayer peer
+	var offline_mode = multiplayer.multiplayer_peer == null
 	
-	# Solo procesar input si NO es dummy
+	if not is_dummy and not offline_mode and not Net.has_authority(self):
+		return  # Solo el owner controla movimiento (excepto dummies y offline)
+	
+	# Process input or AI
 	if not is_dummy:
-		_handle_input()
+		_handle_input(delta)
+	else:
+		_handle_dummy_ai(delta)
 	
 	var previous_velocity = velocity
 	var collision = move_and_slide()
@@ -66,7 +77,7 @@ func _physics_process(delta: float) -> void:
 	_handle_player_collisions()
 
 
-func _handle_input() -> void:
+func _handle_input(delta: float) -> void:
 	# Movimiento: prioritizar touch input, fallback a teclado para testing en desktop
 	var input_dir = TouchInput.get_move_direction()
 	
@@ -74,18 +85,77 @@ func _handle_input() -> void:
 		# Fallback para testing en desktop
 		input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	
-	# Velocidad de movimiento: velocidad relativa (m/s) × escala de píxeles
+	# PC controls: WASD/arrows, hold LMB to steer to mouse
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		var mouse_dir = (get_global_mouse_position() - global_position).normalized()
+		if mouse_dir.length() > 0.1:
+			input_dir = mouse_dir
+	
+	# Velocidad máxima: velocidad relativa (m/s) × escala de píxeles
 	# speed_m_s ya está normalizado por media geométrica de participantes
-	var move_speed_px_s = speed_m_s * PIXELS_PER_METER
-	velocity = input_dir * move_speed_px_s
+	var max_speed = speed_m_s * PIXELS_PER_METER
+	
+	# Inertia-based movement: apply acceleration toward input direction
+	if input_dir.length() > 0.01:
+		# Apply acceleration toward desired direction
+		var desired_velocity = input_dir.normalized() * max_speed
+		velocity = velocity.move_toward(desired_velocity, aceleracion * delta)
+	else:
+		# Apply friction when no input
+		var speed = velocity.length()
+		if speed > 0:
+			var friction_amount = friccion * delta
+			if speed <= friction_amount:
+				velocity = Vector2.ZERO
+			else:
+				velocity -= velocity.normalized() * friction_amount
+	
+	# Clamp velocity magnitude to max speed
+	if velocity.length() > max_speed:
+		velocity = velocity.normalized() * max_speed
 	
 	# Habilidades: manejadas por señales de TouchInput o teclas de debug
-	if Input.is_action_just_pressed("ability_1") and loadout:
-		loadout.use_ability(0)
+	# RMB or keys 1-2-3 fire toward mouse
+	var fire_dir = (get_global_mouse_position() - global_position).normalized()
+	
+	if (Input.is_action_just_pressed("ability_1") or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)) and loadout:
+		loadout.use_ability(0, fire_dir)
 	if Input.is_action_just_pressed("ability_2") and loadout:
-		loadout.use_ability(1)
+		loadout.use_ability(1, fire_dir)
 	if Input.is_action_just_pressed("ability_3") and loadout:
-		loadout.use_ability(2)
+		loadout.use_ability(2, fire_dir)
+
+
+func _handle_dummy_ai(delta: float) -> void:
+	# Arena center for 1920x1080
+	const ARENA_CENTER = Vector2(960, 540)
+	const CENTER_RADIUS = 80.0  # Distance threshold to consider "at center"
+	
+	# Calculate direction to center
+	var to_center = ARENA_CENTER - global_position
+	var distance_to_center = to_center.length()
+	
+	# Velocidad máxima: same as player
+	var max_speed = speed_m_s * PIXELS_PER_METER
+	
+	if distance_to_center > CENTER_RADIUS:
+		# Seek toward center with acceleration
+		var seek_dir = to_center.normalized()
+		var desired_velocity = seek_dir * max_speed
+		velocity = velocity.move_toward(desired_velocity, aceleracion * delta)
+	else:
+		# Close to center: damp velocity
+		var speed = velocity.length()
+		if speed > 0:
+			var damping_amount = friccion * delta * 1.5  # Slightly stronger damping at center
+			if speed <= damping_amount:
+				velocity = Vector2.ZERO
+			else:
+				velocity -= velocity.normalized() * damping_amount
+	
+	# Clamp velocity magnitude to max speed
+	if velocity.length() > max_speed:
+		velocity = velocity.normalized() * max_speed
 
 
 func take_damage(amount: int, attacker_id: int = -1, knockback_direction: Vector2 = Vector2.ZERO, knockback_strength: float = 0.0) -> void:
@@ -148,7 +218,7 @@ func set_normalized_speed(geometric_mean: float) -> void:
 
 
 ## Maneja colisiones con paredes (StaticBody2D)
-## Aplica daño basado en velocidad de impacto
+## Aplica daño basado en velocidad de impacto y rebote
 func _handle_wall_collisions(previous_velocity: Vector2) -> void:
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)
@@ -159,6 +229,11 @@ func _handle_wall_collisions(previous_velocity: Vector2) -> void:
 			# Calcular velocidad de impacto (componente normal a la pared)
 			var normal = collision.get_normal()
 			var impact_speed = abs(previous_velocity.dot(-normal))
+			
+			# Bounce velocity with normal
+			var velocity_normal = velocity.dot(normal) * normal
+			var velocity_tangent = velocity - velocity_normal
+			velocity = velocity_tangent - velocity_normal * rebote_jugador
 			
 			if impact_speed > WALL_DAMAGE_THRESHOLD:
 				# Calcular daño basado en velocidad e impacto × masa
@@ -190,9 +265,11 @@ func _handle_player_collisions() -> void:
 
 
 ## Aplica respuesta de colisión elástica entre dos pelotitas
-## Usa conservación de momento y energía (colisión perfectamente elástica)
+## Usa conservación de momento y energía con restitución aumentada
 func _apply_elastic_collision(other: Player, collision: KinematicCollision2D) -> void:
-	if not Net.has_authority(self):
+	# Offline mode: allow collision handling without authority
+	var offline_mode = multiplayer.multiplayer_peer == null
+	if not offline_mode and not Net.has_authority(self):
 		return
 	
 	# Vector de separación (de other hacia self)
@@ -218,17 +295,30 @@ func _apply_elastic_collision(other: Player, collision: KinematicCollision2D) ->
 	if vel_along_normal > 0:
 		return
 	
-	# Coeficiente de restitución (1.0 = perfectamente elástico)
-	var restitution = 1.0
+	# Coeficiente de restitución con boost (rebote_jugador > 1.0)
+	var restitution = rebote_jugador
 	
 	# Calcular impulso escalar
 	var impulse_scalar = -(1.0 + restitution) * vel_along_normal
 	impulse_scalar /= (1.0 / masa) + (1.0 / other.masa)
+	
+	# Only apply impulse if above minimum threshold
+	if abs(impulse_scalar) < rebote_min_impulse:
+		impulse_scalar = sign(impulse_scalar) * rebote_min_impulse
 	
 	# Aplicar impulso a velocidades
 	var impulse = normal * impulse_scalar
 	velocity += impulse / masa
 	
 	# Si tenemos autoridad sobre el otro jugador también, aplicar su impulso
-	if Net.has_authority(other):
+	if offline_mode or Net.has_authority(other):
 		other.velocity -= impulse / other.masa
+	
+	# Anti-overlap separation: push apart if overlapping
+	var min_separation = 32.0  # Assumed collision shape radius × 2
+	if distance < min_separation:
+		var overlap = min_separation - distance
+		var separation_offset = normal * overlap * 0.5
+		global_position += separation_offset
+		if offline_mode or Net.has_authority(other):
+			other.global_position -= separation_offset
