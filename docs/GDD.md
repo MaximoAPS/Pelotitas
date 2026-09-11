@@ -238,7 +238,7 @@ class_name PelotitaData extends Resource
 @export var ataque: int = 50        # Base nivel 0
 @export var defensa: int = 50       # Base nivel 0
 @export var velocidad: int = 50     # Base nivel 0 (stat, no px/s)
-@export var masa: float = 1.0       # Constante por ahora
+@export var masa: float = 1.0       # Locked: fija en 1.0 para MVP
 
 ## Afinidad Elemental (Secreta, generada al crear)
 @export var fuego_affinity: float = 0.0    # Suma total = 1.0
@@ -555,7 +555,9 @@ Cada pelotita tiene 4 stats principales:
 - ATK: 50-60
 - DEF: 50-60
 - SPD: 50-60
-- Masa: 1.0 (fija por ahora)
+- Masa: 1.0 **(fija, locked para MVP)**
+
+**Nota sobre Masa**: En MVP, masa es siempre 1.0 para todas las pelotitas en todo momento. No hay variación por nivel, roll, o stats. Solo habilidades pasivas futuras podrán modificar masa (ej: "Masa +20% durante 5s"). Esto simplifica balance y física para MVP.
 
 **No hay dos pelotitas nivel 0 idénticas** (probabilidad astronómicamente baja de mismo roll).
 
@@ -2230,10 +2232,10 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ¿DEF afecta HP efectivo o solo daño recibido?
    - **Impacto**: Balance de combate
 
-7. **Masa Variable**
-   - ¿Masa es constante (1.0) o puede cambiar?
-   - ¿Pasivas que aumentan masa? ¿Habilidades temporales?
-   - **Impacto**: Complejidad de colisiones elásticas
+7. **Masa Variable** ✅ **LOCKED PARA MVP**
+   - ✅ **Locked**: Masa = 1.0 fija en MVP (sin variación por nivel, roll, stats)
+   - 🔮 **Futuro**: Habilidades pasivas podrán modificar masa temporalmente (ej: "+20% masa por 5s")
+   - **Impacto**: Simplifica balance de física y colisiones en MVP
 
 8. **Cooldowns y Recursos**
    - ¿Sistema de mana/energía o solo cooldowns?

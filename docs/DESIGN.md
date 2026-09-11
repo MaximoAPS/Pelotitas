@@ -73,6 +73,8 @@ Cada pelotita tiene **4 stats principales**:
 - **Defensa** (`defensa`): reducción de daño recibido
 - **Velocidad** (`velocidad`): multiplicador de velocidad de movimiento
 - **Masa** (`masa`): peso en colisiones elásticas
+  - ✅ **Locked MVP**: Masa = 1.0 fija (sin random, sin scaling)
+  - Futuro: pasivas pueden modificar masa temporalmente
 
 **Fórmula de daño**:
 ```
