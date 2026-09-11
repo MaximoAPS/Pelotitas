@@ -371,7 +371,86 @@ func detect_language() -> String:
 
 ---
 
-### 12. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 12. Sistema de Pausa - Solo Local/Test ✅ LOCKED
+
+**Decisión locked**:
+- ✅ **Pause solo en local/test** (no en multiplayer)
+- ✅ **Multiplayer = sin pausa**: Matches PvP no pausables (competitivo)
+- ✅ **Local/test = con pausa**: Practice mode vs dummy puede pausar
+
+**Razón de diseño**:
+- ⚔️ **Fairness competitivo**: Pausar en PvP rompe el ritmo y permite ventaja táctica
+- 🎮 **Estándar del género**: Juegos PvP competitivos no permiten pause
+- 🔄 **Matches rápidos**: Duelos 1-3 min no requieren pause (vs juegos largos 30+ min)
+- ⚡ **Reconexión**: Si hay disconnect, match termina (Opción A) - no pause para reconectar
+
+**Comportamiento por modo**:
+
+| Modo de juego | Pause permitido | Razón |
+|---------------|-----------------|-------|
+| **Multiplayer PvP** (host/join) | ❌ NO | Competitivo, fairness |
+| **Practice Local** (vs dummy, futuro) | ✅ SÍ | Solo testing, sin oponente real |
+| **Tutorial** (futuro) | ✅ SÍ | Educacional, single-player |
+
+**Implementación**:
+```gdscript
+# En Match/Arena
+func _input(event):
+    if event.is_action_pressed("ui_cancel"):  # ESC / Back button
+        if is_local_practice_mode():
+            toggle_pause()  # Mostrar menú de pausa
+        else:
+            show_quit_confirmation()  # Solo confirmar salir (no pausar)
+
+func toggle_pause():
+    get_tree().paused = true
+    pause_menu.visible = true
+    # Menú: [Reanudar] [Opciones] [Salir]
+
+func show_quit_confirmation():
+    # Modal: "¿Abandonar duelo? Contará como derrota"
+    # [Cancelar] [Abandonar]
+    pass
+```
+
+**Menú de pausa** (solo local):
+```
+┌─────────────────────────────────┐
+│            PAUSA                │
+├─────────────────────────────────┤
+│                                 │
+│  [▶ Reanudar]                   │
+│  [⚙ Opciones]                   │
+│  [🏠 Salir al Menú]             │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Multiplayer PvP** (ESC/Back button):
+```
+┌─────────────────────────────────┐
+│     ¿Abandonar Duelo?           │
+├─────────────────────────────────┤
+│                                 │
+│  Si abandonas, contará como     │
+│  derrota y el oponente ganará.  │
+│                                 │
+│  [Cancelar]  [Abandonar]        │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Notas**:
+- ⚠️ **Disconnect handling**: Si hay disconnect, match termina (Opción A locked implícitamente)
+  - No hay "pause para reconectar" (Opción B descartada)
+  - No hay AI takeover (Opción C futuro lejano)
+- 🎯 **MVP**: Solo multiplayer PvP (sin pause), practice mode futuro
+
+**Estado**: ✅ CERRADO - No pause en multiplayer
+
+---
+
+### 13. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -3141,13 +3220,13 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ¿Ready check o auto-start cuando ambos conectan?
    - **Impacto**: Flujo de usuario roto si no está claro
 
-5. **Desconexión en Match** ⚠️ **ABIERTO**
-   - ⚠️ **Pendiente de decisión**: ¿Qué pasa si un jugador se desconecta mid-match?
-     - Opción A: match termina, desconectado pierde
-     - Opción B: pausa 10s para reconectar
-     - Opción C: AI toma control temporalmente
-   - **Impacto**: Experiencia de usuario muy mala sin manejo de desconexión
-   - **Estado**: ⚠️ ABIERTO - Requiere decisión
+5. **Desconexión en Match** ✅ **LOCKED (implícitamente via pause decision)**
+   - ✅ **Locked implícitamente**: Opción A - match termina, desconectado pierde
+   - ✅ **No pause para reconectar**: Opción B descartada (no hay pause en multiplayer)
+   - ⛔ **Out of MVP**: Opción C (AI takeover) - futuro lejano
+   - **Razón**: No pause en PvP → disconnect = forfeit automático
+   - **Timeout de conexión**: ~5-10s sin respuesta = desconexión detectada
+   - **Estado**: ✅ CERRADO (via pause decision)
 
 6. **Múltiples Pelotitas** ✅ **COMPLETAMENTE LOCKED**
    - ✅ **Locked**: Límite gratuito de **3 pelotitas** en MVP
@@ -3527,7 +3606,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values. Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). (11) No audio en MVP (SFX/música deferred a Fase 3 beta/polish). (12) i18n: Spanish + English, auto-detect locale, fallback Spanish, switchable en settings. (13) Pause solo en local/test, no en multiplayer PvP (fairness competitivo). Disconnect handling locked implícitamente: match termina, desconectado pierde (no pause para reconectar). Provisionales: first-launch forced pelotita creation, orientation landscape, HP scaling values. |
 
 ---
 
