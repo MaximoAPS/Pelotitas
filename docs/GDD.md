@@ -95,27 +95,27 @@ const MATCH_DURATION: float = 180.0  # 3 minutos
 
 **Fórmula locked**:
 ```
-max_HP = 100 + 15 × nivel
+max_HP = 100 + 10 × nivel
 ```
 
 **Ejemplos**:
 - Nivel 0: 100 HP
-- Nivel 1: 115 HP
-- Nivel 5: 175 HP
-- Nivel 10: 250 HP (nivel máximo MVP)
+- Nivel 1: 110 HP
+- Nivel 5: 150 HP
+- Nivel 10: 200 HP (nivel máximo MVP)
 
 **Características**:
-- ✅ **Progresión lineal**: +15 HP por nivel
+- ✅ **Progresión lineal**: +10 HP por nivel
 - ✅ **DEF independiente**: DEF solo afecta daño recibido, no HP máximo
 - ⚠️ **Provisional**: Valores sujetos a balance y tuning en playtesting
-  - Si peleas son muy largas → reducir a +10 HP/nivel
-  - Si peleas muy cortas → aumentar a +20 HP/nivel
-- ✅ **Impacto visible**: Diferencia tangible entre niveles (nivel 10 tiene 2.5× HP de nivel 0)
+  - Si peleas son muy largas → reducir a +8 HP/nivel
+  - Si peleas muy cortas → aumentar a +15 HP/nivel
+- ✅ **Impacto visible**: Diferencia tangible entre niveles (nivel 10 tiene 2× HP de nivel 0)
 
 **Implementación**:
 ```gdscript
 # En Player._ready()
-hp_max = 100 + 15 * pelotita_data.level
+hp_max = 100 + 10 * pelotita_data.level
 hp_current = hp_max
 ```
 
@@ -498,7 +498,7 @@ var max_speed_px_s: float = 200.0  # Calculado de velocidad stat + geometric mea
 var masa: float = 1.0
 
 ## Estado de combate (✅ HP scaling locked - provisional)
-var hp_max: int = 100  # ✅ LOCKED (provisional): Calculado como 100 + 15 × nivel
+var hp_max: int = 100  # ✅ LOCKED (provisional): Calculado como 100 + 10 × nivel
 var hp_current: int = 100
 
 ## Física
@@ -514,7 +514,7 @@ var loadout: Loadout = null
 func _ready():
     # Cargar datos de pelotita
     # ✅ LOCKED (provisional): Calcular HP máximo basado en nivel
-    hp_max = 100 + 15 * pelotita_data.level
+    hp_max = 100 + 10 * pelotita_data.level
     hp_current = hp_max
     # Calcular max_speed_px_s basado en geometric mean del match
     # Instanciar loadout y llamar on_equip/on_match_start
@@ -2809,11 +2809,11 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
 ### Media Prioridad (Mejoran MVP pero no bloquean)
 
 6. **HP Base y Scaling** ✅ **LOCKED (provisional, tunable)**
-   - ✅ **Locked (provisional)**: `max_HP = 100 + 15 × nivel`
+   - ✅ **Locked (provisional)**: `max_HP = 100 + 10 × nivel`
      - Nivel 0: 100 HP
-     - Nivel 1: 115 HP
-     - Nivel 5: 175 HP
-     - Nivel 10: 250 HP
+     - Nivel 1: 110 HP
+     - Nivel 5: 150 HP
+     - Nivel 10: 200 HP
    - ⚠️ **Provisional**: Valores sujetos a balance/tuning en playtesting
    - ✅ **DEF**: Afecta solo daño recibido (no HP efectivo)
    - **Impacto**: Balance de combate, progresión más tangible
@@ -3172,7 +3172,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 15 × nivel` (provisional, tunable). Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). Disconnect behavior marcado como abierto. |
 
 ---
 
