@@ -470,12 +470,13 @@ Daño = max(1, 15 - 8 × 0.5) = max(1, 15 - 4) = 11
 
 La velocidad de movimiento usa un sistema **relativo** basado en la media geométrica de todos los participantes del match, con física de **inercia** para movimiento fluido.
 
-**Sistema de inercia**:
+**Sistema de inercia** (✅ locked provisional):
 - El input del jugador define una **dirección deseada**, no velocidad instantánea
-- La pelotita **acelera** hacia la dirección deseada (tuneable: `aceleracion` ≈ 900 px/s²)
-- Sin input, se aplica **fricción** que desacelera gradualmente (tuneable: `friccion` ≈ 700 px/s²)
+- La pelotita **acelera** hacia la dirección deseada: **aceleracion = vmax / 4** (≈4s de 0 a max speed)
+- Sin input, se aplica **fricción** que desacelera gradualmente: **friccion = vmax / 4** (⚠️ provisional)
 - La velocidad se clampea a la **velocidad máxima** calculada del stat (`speed_m_s × PIXELS_PER_METER`)
 - Resultado: movimiento con peso e inercia, no detención/arranque instantáneos
+- **Tunable**: Si se siente sluggish, reducir factor (ej: vmax/3 = 3s, vmax/2 = 2s)
 
 **Fórmula**:
 
