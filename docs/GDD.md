@@ -2598,11 +2598,11 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - Cooldowns por defecto: ¿1s básicas, 5s intermedias, 15s ultimates?
    - **Impacto**: Ritmo de combate
 
-9. **Mapa y Obstáculos** ✅ **LOCKED**
+9. **Mapa y Obstáculos** ✅ **COMPLETAMENTE LOCKED**
    - ✅ Tamaño 1920×1080 suficiente para MVP
    - ✅ Primer mapa incluye 4-6 obstáculos fijos (pilares)
    - ✅ Obstáculos bloquean jugadores Y proyectiles (cover efectivo)
-   - ⚠️ **Solo VFX TBD**: Efecto visual al impactar (no afecta gameplay)
+   - ✅ Proyectil explota (VFX elemental) al impactar, sin daño AoE
    - **Impacto**: Táctica de combate, posicionamiento crítico
 
 10. **Proyectiles vs Obstáculos** ✅ **LOCKED**

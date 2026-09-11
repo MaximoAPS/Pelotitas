@@ -62,8 +62,8 @@ Las siguientes decisiones están **firmemente locked** para MVP:
 - Arena rectangular 1920×1080 con paredes perimetrales
 - **4-6 obstáculos fijos** (pilares/bloqueadores) distribuidos simétricamente
 - **Obstáculos bloquean**: jugadores Y proyectiles (cover efectivo)
+- **Proyectil en obstáculo**: explota (VFX elemental) y desaparece, sin daño AoE
 - Propósito: cover táctico y líneas de sight interesantes
-- VFX de impacto proyectil-obstáculo: TBD (solo visual)
 
 ### Controles Móviles
 
