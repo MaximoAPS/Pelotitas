@@ -1921,9 +1921,11 @@ graph TD
 5. Transición a **Host/Join screen**
 6. Botón `[← Volver]` regresa a Menú Principal sin seleccionar
 
-**Si roster vacío** (primera vez):
-- Redirigir automáticamente a "Crear Pelotita"
+**Si roster vacío** (primera vez) ⚠️ **PROVISIONAL**:
+- ⚠️ **Provisional**: Redirigir automáticamente a "Crear Pelotita" (forzar creación obligatoria)
+- **Razón**: No se puede jugar duelo sin pelotitas en roster
 - Después de crear, auto-seleccionar esa pelotita y continuar a Host/Join
+- **Nota**: Marcado como provisional, puede cambiar si usuario contradice más adelante
 
 **Implementación**:
 ```gdscript
@@ -1934,7 +1936,7 @@ func _ready():
     var pelotitas = Progression.list_all_pelotitas()
     
     if pelotitas.is_empty():
-        # Primera vez: forzar creación
+        # ⚠️ PROVISIONAL: Primera vez fuerza creación (no se puede duelo sin pelotitas)
         get_tree().change_scene_to_file("res://scenes/menus/create_pelotita.tscn")
         return
     
