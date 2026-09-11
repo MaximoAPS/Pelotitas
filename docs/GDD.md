@@ -153,7 +153,49 @@ pelotita.unlocked_ability_ids = [basic_shot_path]  # Solo 1 habilidad inicial
 
 ---
 
-### 7. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 7. Sistema de Loadout y HUD Dinámico ✅ CERRADO
+
+**Decisión locked**:
+- ✅ **Loadout guardado en PelotitaData** (persistente, no elegido pre-match)
+- ✅ **Estructura**: 3 slots usables + 1 slot pasiva (todos opcionales, pueden estar vacíos)
+- ✅ **HUD dinámico**: Mostrar **solo botones para habilidades equipadas**
+
+**Configuración de slots**:
+- Slot 1 (Usable): Obligatorio tener al menos 1 habilidad (disparo básico inicial mínimo)
+- Slot 2 (Usable): Opcional, puede estar vacío
+- Slot 3 (Usable): Opcional, puede estar vacío
+- Slot Pasiva: Opcional, puede estar vacío
+
+**HUD dinámico**:
+- **1 habilidad equipada** → mostrar 1 botón grande
+- **2 habilidades equipadas** → mostrar 2 botones medianos
+- **3 habilidades equipadas** → mostrar 3 botones (layout estándar)
+- **Layout adaptativo**: posición y tamaño ajustan según cantidad equipada
+
+**Loadout inicial** (al crear pelotita):
+```gdscript
+pelotita.equipped_usable_1 = basic_shot_path  # Disparo dominante
+pelotita.equipped_usable_2 = ""  # Vacío
+pelotita.equipped_usable_3 = ""  # Vacío
+pelotita.equipped_passive = ""   # Vacío
+```
+
+**Cambio de loadout**:
+- Pantalla de equipamiento en menú principal (fuera de match)
+- Seleccionar pelotita → Equipar habilidades → Guardar
+- Cambios persisten en archivo `user://pelotitas/pelotita_<uuid>.tres`
+
+**Ventajas del diseño**:
+- ✅ **Identidad persistente**: Cada pelotita tiene su propio build personalizado
+- ✅ **Simplicidad UI**: HUD limpio, sin botones grises/disabled innecesarios
+- ✅ **Flexibilidad**: Permitir 1-3 usables acomoda diferentes estilos (minimalista vs complejo)
+- ✅ **Progresión natural**: Empezar con 1 habilidad, agregar más al desbloquear
+
+**Estado**: ✅ CERRADO
+
+---
+
+### 8. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -178,7 +220,6 @@ pelotita.unlocked_ability_ids = [basic_shot_path]  # Solo 1 habilidad inicial
 
 **Otras preguntas abiertas** (media/baja prioridad):
 - Árbol de habilidades (cuántas por elemento, costos, dependencias)
-- Sistema de loadout (persistente vs pre-match)
 - Lobby timeout y ready check
 
 ---
@@ -472,11 +513,12 @@ class_name PelotitaData extends Resource
    - Ejemplo: afinidad `[0.38, 0.12, 0.28, 0.22]` → Fuego dominante → auto-learn "Disparo de Fuego"
    - Ejemplo empate: `[0.30, 0.30, 0.20, 0.20]` → Fuego/Agua empatados → sortear entre ambos
    - ⚠️ **Esto revela parcialmente la afinidad**: El jugador puede inferir que su pelotita tiene alta afinidad al elemento del disparo inicial
-9. ⚠️ **Loadout inicial** (TBD - pendiente de decisión):
-   - Opción A: Loadout guardado en `PelotitaData` (3 slots usables + 1 pasiva)
-   - Opción B: Loadout elegido pre-match (no persistente, temporal por duelo)
-   - **Impacto**: Afecta arquitectura de datos y UI de equipamiento
-   - **Requiere decisión pronto** para implementar flujo de pre-match
+9. ✅ **Loadout inicial** (LOCKED - guardado en PelotitaData):
+   - ✅ **Locked**: Loadout **guardado persistentemente** en cada pelotita
+   - Estructura: 3 slots usables + 1 slot pasiva (todos opcionales)
+   - Inicial: Slot 1 = disparo básico dominante, Slots 2-3 = vacíos, Pasiva = vacía
+   - HUD dinámico: mostrar solo botones para habilidades equipadas (1-3)
+   - Cambio en menú principal (pantalla de equipamiento separada)
 
 **Resultado**: 
 - Dos pelotitas creadas al mismo tiempo son **diferentes** (stats roll único + posible elemento inicial distinto)
@@ -2027,11 +2069,14 @@ func get_selected_pelotita() -> PelotitaData:
 └──────────────────────────────────────────────┘
 ```
 
-**Mobile HUD** (scenes/ui/mobile_hud.tscn):
+**Mobile HUD** (scenes/ui/mobile_hud.tscn) ✅ **HUD dinámico locked**:
 - Joystick virtual (izquierda inferior)
-- 3 botones de habilidad (derecha inferior) con cooldown visual
+- **Botones de habilidad dinámicos** (derecha inferior) - ✅ LOCKED:
+  - Mostrar **solo las habilidades equipadas** (1-3 botones)
+  - Layout adapta posición/tamaño según cantidad
+  - Cada botón: cooldown visual + icono elemental
 - Barra de vida (superior)
-- Timer de match (superior derecha)
+- Timer de match (superior derecha - ✅ 3:00 locked)
 
 ---
 
@@ -2855,17 +2900,20 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ¿Habilidades híbridas (requieren 2 elementos)?
    - **Impacto**: Sin esto, puntos elementales no tienen uso
 
-3. **Sistema de Loadout** ⚠️ **ABIERTO**
-   - ⚠️ **Pendiente de decisión**: ¿Loadout guardado en PelotitaData o elegido pre-match?
-     - **Opción A**: Loadout persistente guardado en cada pelotita
-       - Pros: Personalización persistente, pelotita tiene "identidad" de loadout
-       - Cons: Cambiar loadout requiere menú separado, menos flexible
-     - **Opción B**: Loadout temporal elegido antes de cada duelo
-       - Pros: Flexibilidad táctica, adaptar a oponente conocido
-       - Cons: Setup adicional pre-match, menos "identidad fija" de pelotita
-   - **Impacto**: Afecta arquitectura de datos (`PelotitaData`), flujo de UI pre-match, y UX de equipamiento
-   - **Requiere decisión pronto** para implementar pantalla de selección/equipamiento
-   - **Estado**: ⚠️ ABIERTO
+3. **Sistema de Loadout** ✅ **LOCKED**
+   - ✅ **Locked**: Loadout **guardado en PelotitaData** (persistente, no pre-match)
+   - ✅ **Estructura**: 3 slots para usables + 1 slot para pasiva
+     - Cada slot puede estar **vacío** o tener una habilidad equipada
+     - Slots de usables pueden tener 1, 2, o 3 habilidades equipadas (no obligatorio llenar los 3)
+     - Pasiva es opcional (puede estar vacía)
+   - ✅ **HUD dinámico**: UI muestra **solo botones para habilidades equipadas**
+     - Si equipadas = 1 → mostrar 1 botón
+     - Si equipadas = 2 → mostrar 2 botones
+     - Si equipadas = 3 → mostrar 3 botones
+     - Layout adapta posición/tamaño según cantidad
+   - ✅ **Cambio de loadout**: Pantalla de equipamiento en menú principal (fuera de match)
+   - ✅ **Identidad de pelotita**: Cada pelotita tiene su propio loadout personalizado
+   - **Estado**: ✅ CERRADO
 
 4. **Lobby y Matchmaking MVP**
    - ¿Timeout de espera en lobby? (sugerencia: 60s, luego cancelar)
@@ -3257,7 +3305,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. Disconnect behavior y loadout system (persistente vs pre-match) marcados como abiertos. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). Disconnect behavior marcado como abierto. |
 
 ---
 
