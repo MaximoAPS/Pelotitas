@@ -129,8 +129,19 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 
 ### Roster de Pelotitas
 
-- **MVP**: 3-5 pelotitas gratis (decidir entre 3 o 5, pick one antes de launch)
+- **MVP**: **3 pelotitas gratis** (máximo)
 - **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
+
+### Creación de Pelotita (Locked)
+
+**Flujo de creación**:
+- Jugador ingresa **solo el nombre** (3-16 caracteres)
+- Sistema genera automáticamente:
+  - Stats: 50/50/50 base + roll aleatorio +10 entre ATK/DEF/SPD
+  - Afinidades secretas (4 pesos elementales, suma = 1.0)
+  - Color visual derivado del elemento dominante en afinidad
+- **Jugador NO elige**: stats, color, elemento, apariencia
+- **Filosofía**: Descubrir la identidad de la pelotita durante el juego, no elegirla
 
 ### Disparo Básico Elemental
 
