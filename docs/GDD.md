@@ -1611,6 +1611,8 @@ func get_selected_pelotita() -> PelotitaData:
 
 **Propósito**: Esperar a que ambos jugadores estén listos
 
+**Precondición (Locked)**: Cada jugador ya seleccionó su pelotita antes de llegar al lobby
+
 **UI Host**:
 ```
 ┌─────────────────────────────────┐
@@ -1620,10 +1622,11 @@ func get_selected_pelotita() -> PelotitaData:
 │ Puerto: 7777                    │
 │                                 │
 │ Jugadores:                      │
-│  ✅ Tú (Chispa)  [Listo ✓]     │
+│  ✅ Tú - "Chispa" (Lv12 🔴)     │
+│     [Listo ✓]                   │
 │  ⏳ Esperando jugador 2...      │
 │                                 │
-│ [Cancelar]                      │
+│  [Cancelar]                     │
 └─────────────────────────────────┘
 ```
 
