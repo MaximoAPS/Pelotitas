@@ -132,6 +132,11 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 - **MVP**: **3 pelotitas gratis** (máximo)
 - **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
 
+**Selección antes de duelo** (Locked):
+- Antes de iniciar un duelo, jugador **selecciona 1 pelotita** de su roster
+- Pantalla de selección muestra: nombre, color, nivel, stats, récord (victorias/derrotas)
+- La pelotita seleccionada determina: stats del match, habilidades disponibles, XP ganada
+
 **Borrado de pelotita** (Locked):
 - Cuando roster lleno (3/3), jugador puede **borrar** una pelotita para liberar espacio
 - **Doble confirmación requerida**: Modal + input manual del nombre
