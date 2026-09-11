@@ -1262,15 +1262,20 @@ P1/P2 = Spawn points (simétricos)
 
 **Interacción Proyectil vs Obstáculo** ✅ **LOCKED**:
 - ✅ **Obstáculos bloquean AMBOS**: movimiento de jugadores Y proyectiles
-- ✅ Proyectiles **desaparecen** al impactar obstáculo (no rebotan, no atraviesan)
-- ✅ Cover es **efectivo** - esconderse detrás protege de proyectiles
-- ⚠️ **VFX de impacto aún TBD**: ¿explosión pequeña? ¿chispa? ¿disipación? (decisión visual, no afecta gameplay)
+- ✅ Proyectiles **explotan y desaparecen** al impactar obstáculo
+- ✅ **VFX de explosión**: misma familia visual que impacto en enemigo
+  - Explosión con partículas de color elemental
+  - Escala posiblemente reducida vs impacto en jugador
+  - Visual feedback claro de "proyectil bloqueado"
+- ✅ **Sin daño AoE**: La explosión es solo visual, NO daña jugadores cercanos
+- ✅ Cover es **efectivo** - esconderse detrás protege completamente
 
 **Implicaciones de diseño**:
 - 🎯 Posicionamiento es crítico: usar obstáculos como cover táctico
 - 🧩 Líneas de sight importan: proyectiles no pasan obstáculos
 - ⚡ Skill expression: flankear, rodear, predecir movimiento rival
 - ⚖️ Balance: movilidad vs cover trade-off
+- 👁️ Visual feedback: explosión confirma que el proyectil fue bloqueado
 
 #### Configuración de Paredes
 
@@ -1312,19 +1317,33 @@ StaticBody2D (Obstacle_03):
 - `collision_mask = 1 | 4` ✅ **Colisiona con Players (layer 1) Y Projectiles (layer 4)**
 - Sin HP ni daño (no son destructibles en MVP)
 
-**Comportamiento confirmado**:
+**Comportamiento confirmado** (Locked):
 ```gdscript
 # Cuando proyectil impacta obstáculo:
 func _on_projectile_collision(body: Node2D):
     if body.collision_layer == 2:  # Es obstáculo
+        # Spawnear explosión VFX (misma familia que impacto en enemigo)
+        spawn_explosion_vfx(global_position, element_type)
+        # VFX incluye:
+        #   - Partículas de color elemental
+        #   - Flash/destello
+        #   - Posible escala 0.8× del VFX de impacto en jugador
+        
         # Proyectil desaparece
         queue_free()
         
-        # Spawnear VFX de impacto (TBD cuál VFX exactamente)
-        spawn_impact_vfx(global_position)
+        # IMPORTANTE: NO hay daño AoE
+        # La explosión es puramente visual
+        # NO daña jugadores cercanos al obstáculo
         
-        # NO hay daño al obstáculo
+        # NO hay daño al obstáculo (no destructible)
         # NO hay rebote (ricochet)
+
+func spawn_explosion_vfx(pos: Vector2, element: int):
+    var vfx = preload("res://scenes/vfx/projectile_explosion.tscn").instantiate()
+    vfx.global_position = pos
+    vfx.element_color = get_element_color(element)
+    get_tree().root.add_child(vfx)  # VFX auto-destruye después de animación
 ```
 
 #### Posiciones de Spawn (Duelo 1v1)
@@ -2471,9 +2490,10 @@ Placeholder: 4 disparos idénticos en mecánica, diferenciados solo por color.
 
 **Interacción con gameplay** (Locked):
 - ✅ Obstáculos bloquean **movimiento de jugadores** (no se puede atravesar)
-- ✅ Obstáculos bloquean **proyectiles** (proyectil desaparece al impactar)
-- ✅ Cover efectivo: esconderse detrás protege de proyectiles enemigos
-- ⚠️ VFX de impacto proyectil-obstáculo aún TBD (decisión visual)
+- ✅ Obstáculos bloquean **proyectiles** (proyectil explota y desaparece)
+- ✅ **VFX de explosión**: misma familia que impacto en enemigo (partículas elementales)
+- ✅ **Sin daño AoE**: explosión puramente visual, no daña jugadores
+- ✅ Cover efectivo: esconderse detrás protege completamente de proyectiles enemigos
 
 **Único mapa en MVP**: Por simplicidad, solo un mapa bien balanceado para Duelo por Vida
 
@@ -2605,12 +2625,13 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - ✅ Proyectil explota (VFX elemental) al impactar, sin daño AoE
    - **Impacto**: Táctica de combate, posicionamiento crítico
 
-10. **Proyectiles vs Obstáculos** ✅ **LOCKED**
+10. **Proyectiles vs Obstáculos** ✅ **COMPLETAMENTE LOCKED**
     - ✅ Mapa MVP tiene 4-6 obstáculos fijos
     - ✅ **Obstáculos bloquean AMBOS**: jugadores Y proyectiles
-    - ✅ Proyectiles desaparecen al impactar obstáculo (cover efectivo)
-    - ⚠️ **VFX de impacto TBD**: decisión visual (explosión pequeña / chispa / disipación)
-    - **Impacto**: Core gameplay confirmado - posicionamiento táctico es crítico
+    - ✅ Proyectiles **explotan (VFX) y desaparecen** al impactar obstáculo
+    - ✅ **VFX**: misma familia que impacto en enemigo (explosión elemental)
+    - ✅ **Sin daño AoE**: explosión puramente visual, no daña jugadores cercanos
+    - **Impacto**: Core gameplay completo - posicionamiento táctico crítico
 
 11. **AoE y Explosiones**
     - ¿Los disparos básicos explotan con AoE o solo daño single-target?
