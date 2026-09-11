@@ -53,8 +53,16 @@ Las siguientes decisiones están **firmemente locked** para MVP:
 - **Arquitectura modular**: Modos plug-in con núcleo de combate compartido
 - **Primer modo MVP**: **Duelo por Vida** (1v1)
   - Victoria: reducir HP enemigo a 0
-  - Mapa: arena simple
+  - Mapa: "Arena de Pilares" (locked)
 - Futuros modos fáciles de agregar (CTF, King of the Hill, etc.)
+
+### Mapa MVP (Locked)
+
+**Primer mapa**: "Arena de Pilares"
+- Arena rectangular 1920×1080 con paredes perimetrales
+- **4-6 obstáculos fijos** (pilares/bloqueadores) distribuidos simétricamente
+- Propósito: cover táctico y líneas de sight interesantes
+- ⚠️ **TBD**: Interacción proyectil vs obstáculo (explotan/rebotan/atraviesan)
 
 ### Controles Móviles
 
@@ -362,7 +370,7 @@ Sistema **press-and-hold-drag-release** para apuntado preciso:
 
 **Primer modo shippable**: **Duelo por Vida** (1v1)
 - Gana el primero en reducir la vida del rival a 0
-- Mapa: arena simple
+- Mapa: "Arena de Pilares" con 4-6 obstáculos fijos
 
 **Futuros modos fáciles de agregar** (solo requieren nueva clase de `Mode`):
 - Captura la Bandera
