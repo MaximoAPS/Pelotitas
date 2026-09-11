@@ -132,6 +132,11 @@ Daño Final = max(1, Ataque_atacante - Defensa_víctima × 0.5)
 - **MVP**: **3 pelotitas gratis** (máximo)
 - **Out of MVP**: Slots adicionales pagos (monetización futura, muy largo plazo)
 
+**Borrado de pelotita** (Locked):
+- Cuando roster lleno (3/3), jugador puede **borrar** una pelotita para liberar espacio
+- **Doble confirmación requerida**: Modal + input manual del nombre
+- **Sin undo en MVP**: Borrado es permanente (archivo eliminado del disco)
+
 ### Creación de Pelotita (Locked)
 
 **Flujo de creación**:
