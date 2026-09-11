@@ -248,7 +248,29 @@ func show_welcome_screen():
 
 ---
 
-### 9. Curvas de Progresión - Confirmadas ✅ CERRADO
+### 9. Android Orientation - Landscape Fixed ⚠️ PROVISIONAL
+
+**Decisión locked (provisional)**:
+- ⚠️ **Landscape fijo** (no rotación, no portrait)
+- ⚠️ **Ya configurado** en `project.godot`:
+  ```
+  [display]
+  window/handheld/orientation="landscape"
+  ```
+- ⚠️ **Provisional**: Marcado como provisional en caso de que se requiera portrait más adelante
+- ✅ **Consistencia**: Alineado con resolución base 1920×1080 (landscape)
+- ✅ **Controles**: Twin-stick touch optimizado para landscape
+
+**Razón de diseño**:
+- 📱 **Acción PvP**: Landscape ofrece mejor campo de visión para combate top-down
+- 🎮 **Controles**: Joystick + botones se distribuyen mejor en landscape (izq/der)
+- 👁️ **Arena**: 1920×1080 diseñada para aspect ratio horizontal
+
+**Estado**: ⚠️ PROVISIONAL (puede cambiar a portrait o ambos según necesidad)
+
+---
+
+### 10. Curvas de Progresión - Confirmadas ✅ CERRADO
 
 **Ya estaban locked en v0.2, reconfirmadas en v0.3**:
 - ✅ **Curva de XP exponencial**: `100 × 1.5^(n-1)` por nivel
@@ -324,6 +346,10 @@ func show_welcome_screen():
   - Host/join directo por IP local (WiFi)
   - Servidor autoritativo para física y daño
 - **Resolución base**: 1920×1080 landscape
+- ⚠️ **Orientación Android**: **Landscape fijo** (LOCKED provisional)
+  - Ya configurado en `project.godot`: `display/window/handheld/orientation="landscape"`
+  - No rotación automática, siempre landscape
+  - Provisional: puede cambiar si se requiere portrait más adelante
 - **Física**: 2D integrada de Godot (CharacterBody2D, StaticBody2D)
 - **Assets**: Placeholders programáticos (sprites: ColorRect con shape), futura transición a arte custom
 
@@ -3382,7 +3408,7 @@ Ver sección "Visión: pelotas, masa y trayectorias" en DESIGN.md para detalles 
 |---------|-------|---------|
 | 0.1 | Sept 2026 | Documento inicial, estructura básica |
 | 0.2 | Sept 2026 | **Stats locked**: 50 base + roll inicial +10. Secciones completas: entidades, progresión, flujo app, arquitectura, roadmap, preguntas abiertas prioritizadas |
-| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. First-launch forced pelotita creation marcado provisional. Disconnect behavior marcado como abierto. |
+| 0.3 | Sept 11, 2026 | **Decisiones cerradas**: (1) Duelo por vida timer 3:00 + timeout win por mayor HP (empate si HP igual), (2) Usables sin mana, solo cooldowns fijos (básico 1.0s provisional), (3) Obstáculos indestructibles, bloquean todo, jugador colisiona = daño como pared, proyectil colisiona = explota VFX + despawn, (4) Roster 3 máx, borrar para liberar, selección obligatoria pre-duelo, crear = solo nombre, masa 1.0 fija, XP/curva confirmadas v0.2. (5) HP scaling locked: `max_HP = 100 + 10 × nivel` (provisional, tunable). (6) Habilidad inicial: auto-learn 1 disparo básico del elemento dominante (peso afinidad más alto, empates random), revela parcialmente afinidad. (7) Loadout guardado en PelotitaData (persistente, no pre-match), 3 slots usables + 1 pasiva (todos opcionales). (8) HUD dinámico: solo mostrar botones para habilidades equipadas (1-3). (9) Player nickname set on first launch, stored in UserPrefs, editable en settings. (10) Android orientation landscape fixed (provisional, ya en project.godot). Provisionales: first-launch forced pelotita creation, orientation landscape. Disconnect behavior marcado como abierto. |
 
 ---
 
