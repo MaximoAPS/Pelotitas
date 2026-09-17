@@ -73,30 +73,17 @@ func resolve_antimatter_collision(other: BallBody) -> void:
 
 ## TODO: Calcular masa efectiva con modificadores elementales
 func _calculate_effective_mass(attacker_element: Elemento, defender_element: Elemento, base_mass: float) -> float:
-	# Ejemplo: Agua vs Fuego = ×1.5
-	var multiplier = _get_element_advantage(attacker_element, defender_element)
-	return base_mass * multiplier
+	return GameRules.effective_shot_mass(base_mass, int(attacker_element), int(defender_element))
 
 
 ## TODO: Revertir masa efectiva al factor normal después de cancelación
 func _revert_effective_mass(attacker_element: Elemento, defender_element: Elemento, effective_mass: float) -> float:
-	var multiplier = _get_element_advantage(attacker_element, defender_element)
-	return effective_mass / multiplier
+	return GameRules.revert_shot_mass(effective_mass, int(attacker_element), int(defender_element))
 
 
 ## TODO: Matriz de ventajas elementales
 func _get_element_advantage(attacker: Elemento, defender: Elemento) -> float:
-	# Stub: todas las combinaciones son neutras por ahora
-	# Futuro: implementar matriz completa
-	if attacker == Elemento.AGUA and defender == Elemento.FUEGO:
-		return 1.5
-	if attacker == Elemento.FUEGO and defender == Elemento.TIERRA:
-		return 1.5
-	if attacker == Elemento.TIERRA and defender == Elemento.AIRE:
-		return 1.5
-	if attacker == Elemento.AIRE and defender == Elemento.AGUA:
-		return 1.5
-	return 1.0
+	return GameRules.shot_mass_advantage(int(attacker), int(defender))
 
 
 ## TODO: Configurar comportamiento de trayectoria

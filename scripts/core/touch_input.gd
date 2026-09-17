@@ -24,7 +24,7 @@ var joystick_current: Vector2 = Vector2.ZERO
 var joystick_touch_index: int = -1
 
 const JOYSTICK_DEADZONE: float = 0.2
-const JOYSTICK_MAX_RADIUS: float = 80.0
+const JOYSTICK_MAX_RADIUS: float = 120.0
 
 ## Dirección actual del joystick virtual (normalizada)
 var move_direction: Vector2 = Vector2.ZERO
@@ -160,6 +160,13 @@ func get_joystick_offset() -> Vector2:
 		return Vector2.ZERO
 	
 	return joystick_current - joystick_center
+
+
+## Helper: offset crudo del arrastre (para el hint visual)
+func get_ability_aim_offset() -> Vector2:
+	if not ability_aiming:
+		return Vector2.ZERO
+	return ability_aim_current_pos - ability_aim_start_pos
 
 
 ## Helper: obtiene la dirección de apuntado actual de habilidad

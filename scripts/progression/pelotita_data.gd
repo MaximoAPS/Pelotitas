@@ -41,33 +41,37 @@ enum Elemento {
 @export var learned_skills: Array[String] = []
 
 ## Stats de combate base (pueden escalar con nivel)
-@export var ataque: int = 10
-@export var defensa: int = 5
-@export var velocidad: float = 1.0
+@export var ataque: int = 50
+@export var defensa: int = 50
+@export var velocidad: float = 50.0
 @export var masa: float = 1.0
+@export var bonus_hp: int = 0
 
 
 ## Crear nueva pelotita con pesos de afinidad aleatorios
 static func create_new(id: String) -> PelotitaData:
 	var data = PelotitaData.new()
 	data.pelotita_id = id
-	data.affinity_weights = _roll_affinity_weights()
+	data.affinity_weights = GameRules.roll_affinity_weights()
+	var bonus: PackedInt32Array = GameRules.distribute_points(GameRules.CREATE_STAT_BONUS, 3)
+	data.ataque = GameRules.CREATE_STAT_BASE + bonus[0]
+	data.defensa = GameRules.CREATE_STAT_BASE + bonus[1]
+	data.velocidad = float(GameRules.CREATE_STAT_BASE + bonus[2])
+	data.masa = GameRules.DEFAULT_MASA
+	data.bonus_hp = 0
+	var rolled := {"masa": data.masa, "bonus_hp": 0}
+	GameRules.apply_vitality_roll(rolled)
+	data.masa = float(rolled.masa)
+	data.bonus_hp = int(rolled.bonus_hp)
+	var el := GameRules.dominant_element(data.affinity_weights)
+	var learned: Array[String] = []
+	learned.append(GameRules.basic_shot_id(el))
+	data.learned_skills = learned
 	return data
 
 
-## Generar pesos de afinidad aleatorios (suma 100)
 static func _roll_affinity_weights() -> Dictionary:
-	var total = 100
-	var weights = {}
-	
-	# Distribución aleatoria simple
-	weights[Elemento.FUEGO] = randi_range(10, 40)
-	weights[Elemento.AGUA] = randi_range(10, 40)
-	var remaining = total - weights[Elemento.FUEGO] - weights[Elemento.AGUA]
-	weights[Elemento.TIERRA] = randi_range(10, min(40, remaining - 10))
-	weights[Elemento.AIRE] = remaining - weights[Elemento.TIERRA]
-	
-	return weights
+	return GameRules.roll_affinity_weights()
 
 
 ## Convertir a Dictionary (compatibilidad con sistema actual)
@@ -82,7 +86,8 @@ func to_dict() -> Dictionary:
 		"ataque": ataque,
 		"defensa": defensa,
 		"velocidad": velocidad,
-		"masa": masa
+		"masa": masa,
+		"bonus_hp": bonus_hp
 	}
 
 
@@ -95,8 +100,9 @@ static func from_dict(dict: Dictionary) -> PelotitaData:
 	data.affinity_weights = dict.get("affinity_weights", {})
 	data.skill_points = dict.get("skill_points", {})
 	data.learned_skills = dict.get("learned_skills", [])
-	data.ataque = dict.get("ataque", 10)
-	data.defensa = dict.get("defensa", 5)
-	data.velocidad = dict.get("velocidad", 1.0)
-	data.masa = dict.get("masa", 1.0)
+	data.ataque = dict.get("ataque", GameRules.CREATE_STAT_BASE)
+	data.defensa = dict.get("defensa", GameRules.CREATE_STAT_BASE)
+	data.velocidad = dict.get("velocidad", GameRules.CREATE_STAT_BASE)
+	data.masa = dict.get("masa", GameRules.DEFAULT_MASA)
+	data.bonus_hp = dict.get("bonus_hp", 0)
 	return data

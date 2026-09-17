@@ -1,10 +1,10 @@
 # Testing Guide: MVP Networking
 
-This guide explains how to test the MVP networking implementation for Pelotitas.
+Godot **4.7.2**. En el celu, **Unirse** usa un teclado numérico en pantalla (no el diálogo de texto del sistema). Host en PC (F5) + join en el celu es el camino más fácil.
 
 ## Prerequisites
 
-- Godot 4.3+ installed
+- Godot 4.7.2 installed
 - Project opened in Godot Editor
 
 ## Test Scenarios

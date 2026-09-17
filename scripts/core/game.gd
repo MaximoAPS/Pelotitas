@@ -39,13 +39,24 @@ func change_state(new_state: GameState) -> void:
 func start_duel(mode) -> void:  # Mode type
 	active_mode = mode
 	change_state(GameState.IN_DUEL)
-	# TODO: Cargar escena de duelo, pasar modo activo
+
+
+## Host broadcasts match start so both phones enter the arena together.
+@rpc("authority", "call_local", "reliable")
+func rpc_load_arena() -> void:
+	Net.arena_ready_peers.clear()
+	var mode = ModeRegistry.create_mode("duelo_por_vida")
+	if mode == null:
+		mode = DueloPorVida.new()
+	start_duel(mode)
+	get_tree().call_deferred("change_scene_to_file", "res://scenes/duel/arena_duelo.tscn")
 
 
 func end_duel(winner_id: int = -1) -> void:
+	if current_state == GameState.POST_DUEL:
+		return
 	if active_mode:
 		active_mode.on_duel_end(winner_id)
-	
 	change_state(GameState.POST_DUEL)
 	duel_ended.emit(winner_id)
 	print("[Game] Duelo finalizado, ganador: %d" % winner_id)

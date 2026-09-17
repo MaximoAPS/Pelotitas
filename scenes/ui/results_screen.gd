@@ -22,7 +22,6 @@ func show_results(winner_id: int, local_player_id: int = 1) -> void:
 	else:
 		result_title.text = "PERDISTE"
 		winner_label.text = "Derrota"
-	
 	show()
 	print("[ResultsScreen] Mostrando resultados: winner_id=%d" % winner_id)
 
@@ -30,7 +29,9 @@ func show_results(winner_id: int, local_player_id: int = 1) -> void:
 func _on_restart_pressed() -> void:
 	print("[ResultsScreen] Reiniciando duelo...")
 	
-	var mode = DueloPorVida.new()
+	var mode = ModeRegistry.create_mode("duelo_por_vida")
+	if mode == null:
+		mode = DueloPorVida.new()
 	Game.start_duel(mode)
 	get_tree().reload_current_scene()
 

@@ -939,7 +939,6 @@ func calculate_zoom_for_distance(dist: float) -> float:
 - **Impacto**: Experiencia de usuario, requiere decisión pronto
 
 **Otras preguntas abiertas** (media/baja prioridad):
-- Árbol de habilidades (cuántas por elemento, costos, dependencias)
 - Lobby timeout y ready check
 
 ---
@@ -1971,62 +1970,61 @@ Las afinidades exactas **nunca** se muestran en UI. El jugador solo descubre la 
 
 Esto crea **identidad emergente** — el jugador no controla directamente el build, sino que lo descubre.
 
-### 5.5 Skill Tree y Habilidades (Locked + TBD)
+### 5.5 Skill Tree y Habilidades ✅ CERRADO (tier 1)
 
-#### Puntos de Habilidad Elemental
+Los puntos siguen siendo 4 contadores (`skill_points` por elemento). Cada level-up suma **1 punto** del elemento sorteado por afinidad. El disparo básico del dominante sale **gratis en nv 1** al crear la pelotita. Sin refund. Sin habilidades híbridas en este tier.
 
-Cada pelotita acumula puntos en 4 categorías:
-- `fuego_points`
-- `agua_points`
-- `tierra_points`
-- `aire_points`
+**Loadout (ya locked)**: aprender muchas, llevar **3 usables + 1 pasiva**. El rango de una usable no ocupa un slot extra.
 
-Estos puntos se gastan para:
-1. **Desbloquear habilidades nuevas**
-2. **Mejorar habilidades existentes** (ej: cooldown -10%, daño +15%)
+#### Rangos (nv 1–3)
 
-#### Estructura de Skill Tree (TBD - Hay que definir)
+Cada usable sube de nv 1 a nv 3. **1 punto** del elemento de esa habilidad por rango. El rango refuerza el **rasgo**, no copia daño a todos:
 
-**Locked**:
-- Habilidades básicas (disparo elemental de cada elemento) están desbloqueadas desde nivel 0
-- Habilidades avanzadas requieren gastar puntos elementales
-- Habilidades pueden tener dependencias (ej: "Muro de Tierra II" requiere "Muro de Tierra I" desbloqueado)
+| Elemento | Qué sube por rango |
+|---|---|
+| Fuego | daño D (+5). nv 1 = 25, nv 2 = 30, nv 3 = 35 |
+| Viento | velocidad del tiro |
+| Tierra | masa del tiro |
+| Agua | chase (steer) y un poco de lifetime |
 
-**TBD**:
-- ¿Cuántas habilidades por elemento? (sugerencia: 5-8 por elemento en MVP)
-- ¿Costo en puntos de cada habilidad? (sugerencia: básicas=0, intermedias=2-3, avanzadas=5-7)
-- ¿Habilidades híbridas (requieren puntos de dos elementos)?
-- ¿Refunds de puntos o son permanentes?
+Hoy el código vive como si el disparo básico fuera nv 1 con los números de fuego nv 2 (D 30). Al implementar rangos, bajar fuego nv 1 a 25.
 
-**Ejemplo de árbol parcial (Fuego)**:
+#### Árbol por elemento (×4)
+
+1. Disparo básico nv 1 — gratis al crear (si es el dominante).
+2. Disparo básico nv 2 — **1 punto** → abre **3 usables de tier 2** de ese elemento.
+3. Cada usable T2: aprender (nv 1) = 1 punto; nv 2 = 1 punto; nv 3 = 1 punto.
+4. Usable T2 a **nv 2** → abre **su** pasiva (aprender la pasiva = 1 punto más).
+5. Catálogo tier 1: **4 básicos + 12 usables T2 + 12 pasivas**. Se llevan 3 usables y **una** pasiva.
+
 ```
-Disparo de Fuego (Basic Shot)
-  Costo: 0 (desbloqueado desde inicio)
-  Cooldown: 1.0s
-  Daño: ATK × 1.0
-  
-Bola de Fuego (Fireball)
-  Costo: 2 puntos Fuego
-  Cooldown: 3.0s
-  Daño: ATK × 1.5, explosión en área (radio: 50px)
-  Requiere: nivel 3+
-  
-Muro de Fuego (Fire Wall)
-  Costo: 3 puntos Fuego
-  Cooldown: 8.0s
-  Spawnea 3 proyectiles estacionarios que dañan al contacto
-  Duración: 5s
-  Requiere: nivel 5+
-  
-Invocar Salamandra (Fire Summon)
-  Costo: 5 puntos Fuego
-  Cooldown: 15.0s
-  Invoca pelotita NPC que persigue enemigos por 10s
-  Daño de summon: ATK × 0.6
-  Requiere: Muro de Fuego desbloqueado, nivel 8+
+Disparo Fuego nv1 (gratis)
+  └─ nv2 (1 pt) ── abre 3 usables T2
+        ├─ T2 A nv1 → nv2 abre Pasiva A → nv3
+        ├─ T2 B nv1 → nv2 abre Pasiva B → nv3
+        └─ T2 C nv1 → nv2 abre Pasiva C → nv3
+  └─ nv3 (1 pt) — más D
 ```
 
-**UI de Skill Tree**: Pantalla separada accesible desde menú, muestra árbol visual con dependencias (nodos conectados), indica qué habilidades están desbloqueadas/bloqueadas y cuántos puntos quedan disponibles.
+#### Presupuesto (cap 10 = 9 puntos)
+
+Empieza nivel 1 con 0 puntos. Level-ups 2…10 = 9 puntos.
+
+**Primera pasiva, mínimo nivel 5** (4 puntos del mismo elemento): disparo nv 2 + T2 nv 1 + T2 nv 2 + aprender pasiva. Si la afinidad no te da esas 4 del mismo (o del que abriste), no hay pasiva. A nivel 10 un split 3/2/2/2 tampoco llega.
+
+**Nivel 9 (8 puntos), dos extremos**:
+- 3 usables a nv 3 y **cero** pasivas: disparo nv2+nv3 (2) + dos T2 a nv3 (3+3).
+- O una línea a nv 2 + su pasiva, y el resto en otras ramas / rangos.
+
+#### Cómo se implementan las lógicas
+
+No revivir `BallBody` / `TrajectoryBehavior` (stubs). Live path: `UsableAbility.execute()` + `Projectile` (LAN: mismo RPC de spawn; el tiro simula en todos los peers).
+
+Palancas del proyectil (ir agregando cuando una skill las necesite): frenar a 0 (muro = 3 pelotas que salen y se quedan, con duration), rebote, scale/masa en el tiempo, expire (explotar / spawn), steer (ya está). Recoil y chorro de 3 viven en `execute()`, no en el cuerpo.
+
+Pasivas: `PassiveAbility.apply/remove`. Primero números (stat, menos daño de pared, vmax más alto **sin** subir `a_pad`). Órbita / minas / auto-disparo reutilizan el proyectil cuando el muro (tiro parado) exista.
+
+**Código hoy**: 4 disparos básicos, se equipa solo el slot 0, hay `learn_skill` y puntos, no hay UI de árbol ni rangos ni T2.
 
 ---
 
@@ -2038,7 +2036,7 @@ Invocar Salamandra (Fire Summon)
 
 | Tier | Level Cap | Contenido Asociado | Estado |
 |------|-----------|-------------------|--------|
-| **Tier 1 (MVP)** | Nivel 0-10 | 4 elementos × 4-6 habilidades básicas/intermedias, Duelo por Vida | MVP actual |
+| **Tier 1 (MVP)** | Nivel 1-10 | 4 básicos + 12 T2 + 12 pasivas (llevar 3+1), Duelo por Vida | MVP actual |
 | **Tier 2** | Nivel 11-20 | +2-3 habilidades avanzadas por elemento, 1-2 modos nuevos, 2 mapas | Post-MVP |
 | **Tier 3** | Nivel 21-30 | Ultimates elementales, 2 modos adicionales, 3 mapas | Expansión 1 |
 | **Tier 4+** | +10 por tier | Elementos híbridos, modos complejos (Battle Royale), contenido premium | Largo plazo |
@@ -2983,13 +2981,11 @@ Si hay level-up:
 
 ---
 
-#### Pantalla Skill Tree (scenes/menus/skill_tree.tscn - TBD crear)
+#### Pantalla Skill Tree (scenes/menus/skill_tree.tscn - no creada)
 
-**Propósito**: Desbloquear/mejorar habilidades con puntos elementales
+**Propósito**: Gastar puntos según §5.5 (rangos, T2, pasivas).
 
-**UI**: Árbol visual con nodos conectados, estilo tech-tree.
-
-**TBD completo**: diseño, flujo, dependencias.
+**UI**: Árbol por elemento, puntos restantes, nodos nv 1–3. Aún no implementada.
 
 ---
 
@@ -3717,12 +3713,12 @@ No usar estimaciones de tiempo calendario (días/semanas), pero sí ordenar por 
    - **Impacto**: Sistema completo de progresión definido, listo para implementar
    - **Estado**: ✅ CERRADO
 
-2. **Árbol de Habilidades (Skill Tree)**
-   - ¿Cuántas habilidades por elemento en MVP? (sugerencia: 4-6 cada uno = 16-24 total)
-   - ¿Costos en puntos elementales de cada habilidad?
-   - ¿Dependencias entre habilidades?
-   - ¿Habilidades híbridas (requieren 2 elementos)?
-   - **Impacto**: Sin esto, puntos elementales no tienen uso
+2. **Árbol de Habilidades (Skill Tree)** ✅ **CERRADO** (tier 1) — ver §5.5
+   - 4 disparos básicos (gratis nv 1 del dominante) + 12 usables T2 + 12 pasivas
+   - 1 punto por rango (nv 1–3). Disparo nv 2 abre 3 T2; cada T2 nv 2 abre su pasiva
+   - Aprender muchas, llevar 3 usables + 1 pasiva. Sin híbridos, sin refund
+   - Primera pasiva: 4 puntos del mismo elemento (nivel 5 mínimo si la afinidad coopera)
+   - **Estado**: diseño locked; UI / rangos / T2 no implementados
 
 3. **Sistema de Loadout** ✅ **LOCKED**
    - ✅ **Locked**: Loadout **guardado en PelotitaData** (persistente, no pre-match)
@@ -4146,9 +4142,9 @@ Este GDD define la visión completa de **Pelotitas** desde MVP hasta largo plazo
 El enfoque modular y arquitectura extensible permitirá agregar contenido (habilidades, modos, mapas) sin reescribir sistemas core. La identidad emergente de pelotitas (afinidades secretas + distribución aleatoria de stats) asegura que no existan dos pelotitas idénticas, creando apego del jugador a su personaje único.
 
 **Próximos pasos inmediatos**:
-1. Resolver preguntas de alta prioridad (XP, skill tree, lobby)
-2. Completar multiplayer funcional (lobby + match sincronizado)
-3. Implementar 4-6 habilidades intermedias por elemento
+1. Skill tree UI / rangos / primer T2 (muro) — diseño en §5.5
+2. Probar choque de tiros en LAN
+3. Lobby timeout / ready check
 4. Testing exhaustivo en dispositivos Android reales
 5. Polish de UI/UX para controles táctiles
 

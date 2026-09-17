@@ -11,6 +11,13 @@ func _ready() -> void:
 	_register_default_modes()
 
 
+func create_mode(mode_id: String) -> Mode:
+	var proto := get_mode(mode_id)
+	if proto == null:
+		return null
+	return proto.duplicate(true)
+
+
 func _register_default_modes() -> void:
 	register_mode(DueloPorVida.new())
 	# TODO: Agregar más modos aquí:

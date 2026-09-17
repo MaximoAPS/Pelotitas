@@ -34,8 +34,7 @@ func check_victory_conditions() -> void:
 	if alive_players.size() <= 1:
 		var winner_id = -1
 		if alive_players.size() == 1:
-			winner_id = alive_players[0].get_multiplayer_authority()
-		
+			winner_id = alive_players[0].get_combat_id()
 		_declare_victory(winner_id)
 
 
@@ -46,14 +45,4 @@ func _declare_victory(winner_id: int) -> void:
 
 
 func get_spawn_positions() -> Array[Vector2]:
-	# Posiciones fijas para 2 jugadores (provisional)
-	return [
-		Vector2(200, 360),   # Jugador 1 (izquierda)
-		Vector2(1080, 360)   # Jugador 2 (derecha)
-	]
-
-
-func on_player_death(player) -> void:  # Player type
-	super.on_player_death(player)
-	# En este modo, cualquier muerte puede significar victoria
-	check_victory_conditions()
+	return GameRules.duel_spawn_positions()

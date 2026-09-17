@@ -8,11 +8,11 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
 
 ## Estado Actual
 
-**Scaffolding inicial** - Estructura del proyecto, stubs de sistemas, y documentación de diseño. No es un juego jugable todavía.
+**Jugable** en Godot **4.7.2**: menú, host/join LAN, duelo vs dummy, 4 disparos elementales, física (choque elástico, antimateria tiro-tiro), shrink de arena, XP/level-up y roster (cap 1, con reset). Árbol de habilidades **diseñado** (`docs/GDD.md` §5.5); UI de rangos/T2/pasivas y más skills, no.
 
 ## Requisitos
 
-- **Godot Engine 4.3+** (o cualquier versión 4.x compatible)
+- **Godot Engine 4.7.2** (el `project.godot` declara feature `4.7`)
 - Sistema operativo: Windows, Linux, o macOS
 - **Para export Android**: Android SDK + build tools (ver `docs/MOBILE_EXPORT.md`)
 
@@ -26,7 +26,7 @@ Juego **mobile-first** online 2D top-down de batallas entre pelotitas elementale
    cd Pelotitas
    ```
 
-2. Abre **Godot 4.3+** y selecciona "Importar" en el Project Manager
+2. Abre **Godot 4.7** y selecciona "Importar" en el Project Manager
 
 3. Navega a la carpeta del proyecto y selecciona `project.godot`
 
@@ -46,36 +46,31 @@ Ver **`docs/MOBILE_EXPORT.md`** para guía completa de configuración Android.
 **Setup rápido**:
 1. Instalar Android SDK (via Android Studio recomendado)
 2. Configurar rutas en Godot: Editor → Editor Settings → Export → Android
-3. Instalar export templates de Godot 4.3 para Android
-4. Conectar dispositivo por USB con USB debugging habilitado
-5. Project → Export → Android (APK) → One-click deploy
+3. Instalar export templates de Godot **4.7.2.stable** (no .NET)
+4. Project → Export → Android (APK). Detalle: `docs/MOBILE_EXPORT.md`
 
 **Package name**: `com.maximoaps.pelotitas`  
-**Min SDK**: Android 7.0 (API 24)  
-**Target SDK**: Android 14+ (API 34)
+**SDK Platform**: 35 (Android 15). Min SDK: el default del template (no overridear sin Gradle).
 
 ## Arquitectura
 
-Ver **`docs/DESIGN.md`** para documentación completa de diseño y decisiones técnicas.
+Ver **`docs/ARCHITECTURE.md`** para autoloads, `GameRules` y cómo correr tests.  
+Ver **`docs/GDD.md`** §5.5 para el árbol locked. **`docs/DESIGN.md`** para el resto de decisiones.
 
 ### Estructura de Alto Nivel
 
 ```
 pelotitas/
-├── scenes/          # Escenas de Godot (boot, menús, arena)
-│   ├── boot/        # Pantalla de inicio
-│   ├── menus/       # Menú principal
-│   ├── duel/        # Arena de combate
-│   └── ui/          # HUD móvil con controles táctiles
-├── scripts/         # Scripts GDScript organizados por sistema
-│   ├── core/        # Autoloads: Game, Net, Progression, TouchInput
-│   ├── combat/      # Player, Projectile
-│   ├── abilities/   # Sistema de habilidades y loadout
-│   ├── modes/       # Modos de juego (Duelo por Vida, etc.)
-│   ├── progression/ # Level-up, afinidad, skill tree
-│   └── net/         # Networking y multiplayer
-├── assets/          # Arte, audio, fuentes (placeholders)
-└── docs/            # Documentación de diseño
+├── scenes/          # Escenas de Godot (boot, menús, arena, HUD)
+├── scripts/
+│   ├── core/        # Autoloads + GameRules
+│   ├── combat/      # Player, Projectile, trayectorias (stubs)
+│   ├── abilities/   # Ability / Loadout / ElementalShot
+│   ├── modes/       # Mode + DueloPorVida + ModeRegistry
+│   └── progression/ # PelotitaData
+├── resources/abilities/
+├── tests/           # logic_tests + duel_integration (headless)
+└── docs/
 ```
 
 ### Sistemas Clave
@@ -118,14 +113,10 @@ pelotitas/
 
 Ver `docs/DESIGN.md` para lista completa. Prioridades inmediatas:
 
-1. **Testing en dispositivo Android real**
-2. Implementar sincronización multiplayer optimizada para mobile
-3. Crear 3-5 habilidades concretas por elemento
-4. Optimización de rendimiento para móviles gama media/baja
-5. Lobby para esperar jugadores
-6. Persistencia de progresión (save/load)
-7. Vibración háptica en habilidades y daño
-8. Manejo de diferentes aspect ratios móviles
+1. Probar choque de tiros en LAN (hitbox); gastar puntos / equipar 3
+2. Rangos del disparo básico y primer usable T2 (muro)
+3. UI de XP / árbol / pasiva (1 slot)
+4. Testing en dispositivo Android real
 
 ## Contribuir
 

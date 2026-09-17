@@ -1,0 +1,32 @@
+---
+description: Dónde vive cada cosa en Pelotitas y cómo se extiende sin romper el núcleo.
+alwaysApply: true
+---
+
+# Pelotitas — mapa del repo
+
+Godot **4.7.2**, GDScript, Android-first. Números locked: `scripts/core/game_rules.gd`. Diseño: `docs/DESIGN.md` / `docs/GDD.md` (§5.5 árbol). Cómo extender: `docs/ARCHITECTURE.md`.
+
+## Dónde va el código
+
+| Qué | Dónde |
+|---|---|
+| Fórmulas (daño, XP, drive, arena, puerto) | `GameRules` — no hardcodear en escenas |
+| Host/join ENet | `scripts/core/net.gd` |
+| Modo nuevo | heredar `Mode`, registrar en `ModeRegistry` |
+| Habilidad usable | heredar `UsableAbility`, `.tres` en `resources/abilities/` |
+| Pasiva | heredar `PassiveAbility` |
+| Movimiento / choque / HP | `scripts/combat/player.gd` |
+| Tiros | `projectile.gd` + RPC en `arena_duelo.gd` |
+
+No crear autoloads, managers ni carpetas nuevas si entra en una fila de esa tabla.
+
+## Checks
+
+Cambio de fórmula o red: un caso en `tests/logic_tests.gd` (o el probe headless que ya exista). Correr:
+
+`Godot_v4.7.2-stable_win64.exe --headless --path C:\dev\Pelotitas res://tests/logic_tests.tscn`
+
+Export Android: seguir `docs/MOBILE_EXPORT.md`, no improvisar SDK.
+
+LAN/autoridad: skill `lan-combat`. Habilidad nueva: skill `add-ability`. Modo nuevo: skill `add-mode`.

@@ -23,3 +23,8 @@ export_presets.cfg
 
 # Thumbnails
 *.thumb
+
+# Local exports / session logs
+build/
+*.apk
+debug-*.log

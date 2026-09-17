@@ -87,6 +87,11 @@ color = Color(0.6, 0.2, 0.2, 1)
 
 [node name="Players" type="Node2D" parent="."]
 
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://scenes/duel/player_prefab.tscn")
+spawn_path = NodePath("../Players")
+spawn_limit = 4
+
 [node name="Projectiles" type="Node2D" parent="."]
 
 [node name="Camera2D" type="Camera2D" parent="."]

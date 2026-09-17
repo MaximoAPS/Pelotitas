@@ -6,6 +6,8 @@ class_name UsableAbility
 
 @export var cooldown: float = 1.0
 @export var mana_cost: int = 0
+@export var shot_damage: int = 20
+@export var shot_masa: float = 1.0
 
 var last_use_time: float = -999.0
 

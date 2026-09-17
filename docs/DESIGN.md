@@ -773,9 +773,9 @@ func on_hit_enemy(caster: Player, target: Player, projectile: Node2D) -> void:
 - **Bloquea habilidades**: las habilidades usarán estos stats, no al revés
 
 **3. Habilidades**
-- Implementar skill tree elemental con dependencias
+- Árbol locked en `docs/GDD.md` §5.5 (rangos, T2, pasivas). UI y contenido T2 pendientes
 - Habilidades usan stats ya definidos (ATK escala daño, etc.)
-- Triggers y mecánicas complejas
+- Un `Projectile`; no BallBody/trajectory stubs
 
 **4. UI de Beta**
 - HUD elaborado, animaciones, feedback visual rico
@@ -1281,19 +1281,17 @@ Cada elemento tiene un **disparo básico** que funciona con la misma mecánica:
 - [ ] Adaptaciones específicas de iOS (notch, dynamic island, gestures)
 
 ### Habilidades
-- [ ] Implementar habilidades elementales concretas
-  - [ ] Disparo de fuego
-  - [ ] Muro de tierra
-  - [ ] Invocación de aire
-  - [ ] Ola de agua
+- [x] Cuatro disparos básicos (fuego/agua/tierra/viento)
+- [ ] Rangos 1–3 y usables T2 (ver GDD §5.5)
+- [ ] Muro (3 pelotas que frenan)
 - [ ] Cooldown visual (UI)
 - [ ] Efectos visuales y sonidos
 
 ### Progresión
-- [ ] UI de skill tree
-- [ ] Persistencia de datos (save/load)
-- [ ] Balance de experiencia y niveles
-- [ ] Definir todas las habilidades y dependencias
+- [ ] UI de skill tree / gastar puntos
+- [x] Persistencia de roster (`user://`, cap 1)
+- [x] Fórmulas XP / nivel / afinidad en `GameRules`
+- [x] Dependencias del árbol (diseño; no código)
 
 ### Modos Adicionales
 - [ ] Captura la Bandera

@@ -18,17 +18,26 @@ class_name Mode
 
 var active_players: Array = []  # Array of Player instances
 var match_start_time: float = 0.0
+var match_running: bool = false
+var match_elapsed: float = 0.0
+var shrink_steps: int = 0
 
 
 ## Inicializa el modo cuando comienza el duelo
 func on_match_start() -> void:
 	match_start_time = Time.get_ticks_msec() / 1000.0
+	match_running = true
+	match_elapsed = 0.0
+	shrink_steps = 0
 	print("[Mode] Iniciando modo: %s" % mode_name)
 
 
 ## Actualiza la lógica del modo cada frame
 func process(delta: float) -> void:
-	pass
+	if not match_running:
+		return
+	match_elapsed += delta
+	shrink_steps = GameRules.shrink_steps_for_time(match_elapsed)
 
 
 ## Verifica condiciones de victoria
@@ -55,8 +64,11 @@ func get_spawn_positions() -> Array[Vector2]:
 
 ## Registra un jugador en el modo
 func register_player(player) -> void:  # Player type
+	if player in active_players:
+		return
 	active_players.append(player)
-	player.died.connect(_on_player_died.bind(player))
+	if not player.died.is_connected(_on_player_died):
+		player.died.connect(_on_player_died.bind(player))
 
 
 func _on_player_died(player) -> void:  # Player type

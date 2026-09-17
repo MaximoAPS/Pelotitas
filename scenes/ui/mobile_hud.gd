@@ -18,6 +18,7 @@ extends CanvasLayer
 @onready var health_bar = $TopBar/HealthBar
 @onready var health_label = $TopBar/HealthBar/Label
 @onready var ability_buttons = [$AbilityButtons/Ability1, $AbilityButtons/Ability2, $AbilityButtons/Ability3]
+@onready var ability_aim_line: Line2D = $AbilityAimLine
 
 var joystick_initial_pos: Vector2
 var is_joystick_active: bool = false
@@ -78,8 +79,8 @@ func _on_move_direction_changed(direction: Vector2) -> void:
 	if is_joystick_active:
 		var offset = TouchInput.get_joystick_offset()
 		# Limitar el visual a un radio razonable
-		if offset.length() > 60:
-			offset = offset.normalized() * 60
+		if offset.length() > 110:
+			offset = offset.normalized() * 110
 		
 		joystick_stick.position = joystick_initial_pos + offset
 
@@ -92,7 +93,6 @@ func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
 			# Press: Iniciar apuntado
 			TouchInput.start_ability_aim(slot, event.position, event.index)
 			ability_touch_tracking[event.index] = slot
-			# TODO: Mostrar indicador visual de apuntado
 		else:
 			# Release: Disparar habilidad
 			if ability_touch_tracking.has(event.index) and ability_touch_tracking[event.index] == slot:
@@ -103,7 +103,6 @@ func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
 		# Drag: Actualizar dirección de apuntado
 		if ability_touch_tracking.has(event.index) and ability_touch_tracking[event.index] == slot:
 			TouchInput.update_ability_aim(event.position)
-			# TODO: Actualizar indicador visual de dirección
 	
 	# Soporte para mouse (desktop testing)
 	elif event is InputEventMouseButton:
@@ -112,7 +111,6 @@ func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
 				# Press: Iniciar apuntado
 				TouchInput.start_ability_aim(slot, event.position, 0)
 				ability_touch_tracking[0] = slot
-				# TODO: Mostrar indicador visual de apuntado
 			else:
 				# Release: Disparar habilidad
 				if ability_touch_tracking.has(0) and ability_touch_tracking[0] == slot:
@@ -124,7 +122,6 @@ func _on_ability_button_gui_input(event: InputEvent, slot: int) -> void:
 		if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
 			if ability_touch_tracking.has(0) and ability_touch_tracking[0] == slot:
 				TouchInput.update_ability_aim(event.position)
-				# TODO: Actualizar indicador visual de dirección
 
 
 # Conectar eventos de botones a la función común
@@ -138,6 +135,36 @@ func _on_ability_2_pressed() -> void:
 
 func _on_ability_3_pressed() -> void:
 	pass  # Manejado por gui_input
+
+
+## Muestra solo botones de slots con habilidad equipada (nivel 1 = 1 botón).
+func sync_ability_buttons(loadout) -> void:
+	for i in range(ability_buttons.size()):
+		var equipped = loadout != null and loadout.usable_abilities[i] != null
+		ability_buttons[i].visible = equipped
+
+
+func _process(_delta: float) -> void:
+	_update_ability_aim_hint()
+
+
+func _update_ability_aim_hint() -> void:
+	if not TouchInput.is_aiming_ability():
+		ability_aim_line.visible = false
+		return
+	var offset: Vector2 = TouchInput.get_ability_aim_offset()
+	if offset.length() < 8.0:
+		ability_aim_line.visible = false
+		return
+	var slot: int = TouchInput.ability_slot_aiming
+	if slot < 0 or slot >= ability_buttons.size():
+		ability_aim_line.visible = false
+		return
+	var btn: Control = ability_buttons[slot]
+	var origin: Vector2 = btn.get_global_rect().get_center()
+	var dir: Vector2 = offset.normalized()
+	ability_aim_line.visible = true
+	ability_aim_line.points = PackedVector2Array([origin, origin + dir * 110.0])
 
 
 ## Actualiza la barra de vida (llamar desde el script del jugador)
